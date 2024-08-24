@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"log"
 	"net/http"
 	"sync"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/gobuffalo/middleware/forcessl"
 	"github.com/gobuffalo/middleware/i18n"
 	"github.com/gobuffalo/middleware/paramlogger"
-	"github.com/gobuffalo/pop"
 	"github.com/unrolled/secure"
 )
 
@@ -26,7 +24,6 @@ var (
 	app     *buffalo.App
 	appOnce sync.Once
 	T       *i18n.Translator
-	DB      *pop.Connection
 )
 
 func App() *buffalo.App {
@@ -51,13 +48,6 @@ func App() *buffalo.App {
 		// Remove to disable this.
 		// app.Use(popmw.Transaction(models.DB))
 		// Setup and use translations:
-
-		var err error
-		DB, err = pop.Connect("development")
-		if err != nil {
-			log.Fatalf("Could not connect to the database: %v", err)
-		}
-
 		app.Use(translations())
 
 		app.GET("/", HomeHandler)

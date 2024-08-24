@@ -1,29 +1,24 @@
 package actions
 
 import (
-	"beam_payments/models"
+	"fmt"
 	"net/http"
-	"time"
 
+	bdb "beam_payments/models/badger"
+
+	"github.com/dgraph-io/badger/v3"
 	"github.com/gobuffalo/buffalo"
 )
 
 func HomeHandler(c buffalo.Context) error {
 
-	subscription := models.Subscription{
-		UserID:         "test-user",
-		SubscriptionID: "test-subscription",
-		Processing:     true,
-		Ending:         false,
-		Paying:         true,
-		EndDate:        time.Now().AddDate(0, 1, 0),
-		ExpiresDate:    time.Now().AddDate(0, 2, 0),
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-	}
+	err := bdb.DB.Update(func(txn *badger.Txn) error {
+		err := txn.Set([]byte("session-id"), []byte("cookie-data"))
+		return err
+	})
 
-	if err := models.DB.Create(&subscription); err != nil {
-		return c.Error(http.StatusInternalServerError, err)
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 
 	return c.Render(http.StatusOK, r.HTML("home/index.plush.html"))

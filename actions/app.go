@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"beam_payments/locales"
+	"beam_payments/models/badger"
 	"beam_payments/public"
 
 	"github.com/gobuffalo/buffalo"
@@ -53,6 +54,8 @@ func App() *buffalo.App {
 		app.GET("/", HomeHandler)
 
 		app.ServeFiles("/", http.FS(public.FS())) // serve files from the public directory
+
+		defer badger.Close()
 	})
 
 	return app

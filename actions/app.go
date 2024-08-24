@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"beam_payments/locales"
+	"beam_payments/middleware"
 	"beam_payments/models/badger"
 	"beam_payments/public"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/gobuffalo/middleware/forcessl"
 	"github.com/gobuffalo/middleware/i18n"
 	"github.com/gobuffalo/middleware/paramlogger"
+	"github.com/gorilla/sessions"
 	"github.com/unrolled/secure"
 )
 
@@ -30,8 +32,9 @@ var (
 func App() *buffalo.App {
 	appOnce.Do(func() {
 		app = buffalo.New(buffalo.Options{
-			Env:         ENV,
-			SessionName: "_beam_payments_session",
+			Env:          ENV,
+			SessionName:  "_beam_payments_session",
+			SessionStore: sessions.NewCookieStore([]byte("secret-key")),
 		})
 
 		// Automatically redirect to SSL
@@ -43,6 +46,8 @@ func App() *buffalo.App {
 		// Protect against CSRF attacks. https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)
 		// Remove to disable this.
 		app.Use(csrf.New)
+
+		app.Use(middleware.CookieMiddleware)
 
 		// Wraps each request in a transaction.
 		//   c.Value("tx").(*pop.Connection)

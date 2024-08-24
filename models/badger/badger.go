@@ -29,7 +29,7 @@ func Close() {
 	}
 }
 
-func CreateCookie(uid string) (string, bool, error) {
+func CreateCookie(uid string) (uuidstr string, banned bool, anyerr error) {
 
 	var cookie Cookie
 	exists := true
@@ -83,4 +83,47 @@ func CreateCookie(uid string) (string, bool, error) {
 	}
 
 	return cookie.Passcode.String(), false, nil
+}
+
+func CheckCookie(uid, passcode string, created time.Time) (authorized bool, banned bool) {
+	var cookie Cookie
+	exists := true
+
+	err := DB.View(func(txn *badger.Txn) error {
+		item, err := txn.Get([]byte(uid))
+		if err != nil {
+			if err == badger.ErrKeyNotFound {
+				exists = false
+				return nil
+			}
+			return err
+		}
+
+		data, err := item.ValueCopy(nil)
+		if err != nil {
+			return err
+		}
+
+		return json.Unmarshal(data, &cookie)
+	})
+
+	if err != nil || !exists {
+		return false, false
+	}
+
+	if cookie.Banned {
+		return false, true
+	}
+
+	if created.Before(cookie.ResetDate) {
+		return false, false
+	}
+
+	if chuuid, err := uuid.FromString(passcode); err != nil {
+		return false, false
+	} else if chuuid != cookie.Passcode {
+		return false, false
+	}
+
+	return true, false
 }

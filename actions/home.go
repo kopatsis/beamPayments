@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/gofrs/uuid"
 )
 
 func HomeHandler(c buffalo.Context) error {
 
 	subscription := models.Subscription{
-		ID:             uuid.Must(uuid.NewV4()),
 		UserID:         "test-user",
 		SubscriptionID: "test-subscription",
 		Processing:     true,

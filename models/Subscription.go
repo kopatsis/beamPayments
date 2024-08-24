@@ -7,12 +7,11 @@ import (
 	"github.com/gobuffalo/pop/v6"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
-	"github.com/gofrs/uuid"
 )
 
 // Subscription is used by pop to map your subscriptions database table to your go code.
 type Subscription struct {
-	ID             uuid.UUID `json:"id" db:"id"`
+	ID             int       `json:"id" db:"id"`
 	UserID         string    `json:"user_id" db:"user_id"`
 	SubscriptionID string    `json:"subscription_id" db:"subscription_id"`
 	Processing     bool      `json:"processing" db:"processing"`
@@ -43,6 +42,7 @@ func (s Subscriptions) String() string {
 // This method is not required and may be deleted.
 func (s *Subscription) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
+		&validators.IntIsPresent{Field: s.ID, Name: "ID"},
 		&validators.StringIsPresent{Field: s.UserID, Name: "UserID"},
 		&validators.StringIsPresent{Field: s.SubscriptionID, Name: "SubscriptionID"},
 		&validators.TimeIsPresent{Field: s.EndDate, Name: "EndDate"},

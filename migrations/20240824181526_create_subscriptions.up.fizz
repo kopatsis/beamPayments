@@ -1,9 +1,10 @@
 create_table("subscriptions") {
-	t.Column("id", "uuid", {primary: true})
+	t.Column("id", "integer", {primary: true})
 	t.Column("user_id", "string", {})
 	t.Column("subscription_id", "string", {})
 	t.Column("processing", "bool", {})
 	t.Column("ending", "bool", {})
+	t.Column("paying", "bool", {})
 	t.Column("end_date", "timestamp", {})
 	t.Column("expires_date", "timestamp", {})
 	t.Timestamps()

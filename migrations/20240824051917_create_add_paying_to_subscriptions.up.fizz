@@ -1,3 +1,0 @@
-create_table("add_paying_to_subscriptions") {
-	t.Column("paying", "bool", {})
-}

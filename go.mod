@@ -4,13 +4,23 @@ go 1.21.6
 
 require (
 	github.com/gobuffalo/buffalo v1.1.0
-	github.com/gobuffalo/buffalo-pop/v3 v3.0.7
 	github.com/gobuffalo/envy v1.10.2
 	github.com/gobuffalo/grift v1.5.2
 	github.com/gobuffalo/middleware v1.0.0
 	github.com/gobuffalo/pop/v6 v6.1.1
 	github.com/gobuffalo/suite/v4 v4.0.4
+	github.com/gobuffalo/validate/v3 v3.3.3
+	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/unrolled/secure v1.15.0
+)
+
+require (
+	github.com/cockroachdb/cockroach-go v2.0.1+incompatible // indirect
+	github.com/gobuffalo/genny v0.6.0 // indirect
+	github.com/gobuffalo/packd v1.0.2 // indirect
+	github.com/gobuffalo/validate v2.0.4+incompatible // indirect
+	github.com/lib/pq v1.10.7 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 )
 
 require (
@@ -34,10 +44,9 @@ require (
 	github.com/gobuffalo/meta v0.3.3 // indirect
 	github.com/gobuffalo/nulls v0.4.2 // indirect
 	github.com/gobuffalo/plush/v4 v4.1.18 // indirect
+	github.com/gobuffalo/pop v4.13.1+incompatible
 	github.com/gobuffalo/refresh v1.13.3 // indirect
 	github.com/gobuffalo/tags/v3 v3.1.4 // indirect
-	github.com/gobuffalo/validate/v3 v3.3.3 // indirect
-	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect

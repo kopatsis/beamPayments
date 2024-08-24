@@ -1,0 +1,1 @@
+drop_table("add_paying_to_subscriptions")

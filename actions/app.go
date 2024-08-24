@@ -1,20 +1,20 @@
 package actions
 
 import (
+	"log"
 	"net/http"
 	"sync"
 
 	"beam_payments/locales"
-	"beam_payments/models"
 	"beam_payments/public"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/buffalo-pop/v3/pop/popmw"
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/middleware/csrf"
 	"github.com/gobuffalo/middleware/forcessl"
 	"github.com/gobuffalo/middleware/i18n"
 	"github.com/gobuffalo/middleware/paramlogger"
+	"github.com/gobuffalo/pop"
 	"github.com/unrolled/secure"
 )
 
@@ -26,21 +26,9 @@ var (
 	app     *buffalo.App
 	appOnce sync.Once
 	T       *i18n.Translator
+	DB      *pop.Connection
 )
 
-// App is where all routes and middleware for buffalo
-// should be defined. This is the nerve center of your
-// application.
-//
-// Routing, middleware, groups, etc... are declared TOP -> DOWN.
-// This means if you add a middleware to `app` *after* declaring a
-// group, that group will NOT have that new middleware. The same
-// is true of resource declarations as well.
-//
-// It also means that routes are checked in the order they are declared.
-// `ServeFiles` is a CATCH-ALL route, so it should always be
-// placed last in the route declarations, as it will prevent routes
-// declared after it to never be called.
 func App() *buffalo.App {
 	appOnce.Do(func() {
 		app = buffalo.New(buffalo.Options{
@@ -61,8 +49,15 @@ func App() *buffalo.App {
 		// Wraps each request in a transaction.
 		//   c.Value("tx").(*pop.Connection)
 		// Remove to disable this.
-		app.Use(popmw.Transaction(models.DB))
+		// app.Use(popmw.Transaction(models.DB))
 		// Setup and use translations:
+
+		var err error
+		DB, err = pop.Connect("development")
+		if err != nil {
+			log.Fatalf("Could not connect to the database: %v", err)
+		}
+
 		app.Use(translations())
 
 		app.GET("/", HomeHandler)

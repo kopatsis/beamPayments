@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"beam_payments/locales"
-	"beam_payments/middleware"
+	// "beam_payments/middleware"
 	"beam_payments/models/badger"
 	"beam_payments/public"
 
@@ -47,7 +47,7 @@ func App() *buffalo.App {
 		// Remove to disable this.
 		app.Use(csrf.New)
 
-		app.Use(middleware.CookieMiddleware)
+		// app.Use(middleware.CookieMiddleware)
 
 		// Wraps each request in a transaction.
 		//   c.Value("tx").(*pop.Connection)

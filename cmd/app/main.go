@@ -13,6 +13,7 @@ import (
 // call `app.Serve()`, unless you don't want to start your
 // application that is. :)
 func main() {
+
 	app := actions.App()
 	if err := app.Serve(); err != nil {
 		log.Fatal(err)

@@ -14,6 +14,7 @@ require (
 	github.com/gobuffalo/validate/v3 v3.3.3
 	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/gorilla/sessions v1.2.1
+	github.com/stripe/stripe-go/v72 v72.122.0
 	github.com/unrolled/secure v1.15.0
 	google.golang.org/api v0.170.0
 )

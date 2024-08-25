@@ -6,8 +6,9 @@ import (
 	"os"
 	"sync"
 
+	"beam_payments/actions/multipass"
 	"beam_payments/locales"
-	// "beam_payments/middleware"
+	"beam_payments/middleware"
 	"beam_payments/models/badger"
 	"beam_payments/public"
 
@@ -23,8 +24,6 @@ import (
 	"github.com/unrolled/secure"
 )
 
-// ENV is used to help switch settings based on where the
-// application is being run. Default is "development".
 var ENV = envy.Get("GO_ENV", "development")
 
 var (
@@ -50,17 +49,13 @@ func App() *buffalo.App {
 			SessionStore: sessions.NewCookieStore([]byte("secret-key")),
 		})
 
-		// Automatically redirect to SSL
 		app.Use(forceSSL())
 
-		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
 
-		// Protect against CSRF attacks. https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)
-		// Remove to disable this.
 		app.Use(csrf.New)
 
-		// app.Use(middleware.CookieMiddleware)
+		app.Use(middleware.CookieMiddleware)
 
 		// Wraps each request in a transaction.
 		//   c.Value("tx").(*pop.Connection)
@@ -69,9 +64,23 @@ func App() *buffalo.App {
 		// Setup and use translations:
 		app.Use(translations())
 
-		app.GET("/", HomeHandler)
+		app.GET("/oldshit", HomeHandler) // Starter
 
-		app.ServeFiles("/", http.FS(public.FS())) // serve files from the public directory
+		app.GET("/", GetHandler)
+
+		app.POST("/subscription", PostPayHandler)
+		app.PATCH("/subscription/cancel", PostCancelHandler)
+		app.PATCH("/subscription/uncancel", PostUncancelHandler)
+		app.PATCH("/subscription", PostUpdatePayment)
+
+		app.POST("/multipass", multipass.Multipass)
+
+		app.POST("/webhook", HandleStripeWebhook)
+
+		app.POST("/administrative/logout", HandleLogAllOut)
+		app.POST("/administrative/delete", HandleDeleteAccount)
+
+		app.ServeFiles("/", http.FS(public.FS()))
 
 		defer badger.Close()
 	})
@@ -91,11 +100,6 @@ func translations() buffalo.MiddlewareFunc {
 	return T.Middleware()
 }
 
-// forceSSL will return a middleware that will redirect an incoming request
-// if it is not HTTPS. "http://example.com" => "https://example.com".
-// This middleware does **not** enable SSL. for your application. To do that
-// we recommend using a proxy: https://gobuffalo.io/en/docs/proxy
-// for more information: https://github.com/unrolled/secure/
 func forceSSL() buffalo.MiddlewareFunc {
 	return forcessl.Middleware(secure.Options{
 		SSLRedirect:     ENV == "production",

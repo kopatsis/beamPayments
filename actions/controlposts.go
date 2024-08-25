@@ -5,7 +5,6 @@ import (
 	"beam_payments/models"
 	"context"
 	"errors"
-	"net/http"
 	"os"
 	"time"
 
@@ -37,7 +36,7 @@ func PostPayHandler(c buffalo.Context) error {
 
 	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)
 	if err != nil || !firebaseUser.EmailVerified || firebaseUser.Email == "" {
-		return c.Redirect(http.StatusSeeOther, "/error")
+		return c.Error(400, err)
 	}
 
 	email := firebaseUser.Email
@@ -106,8 +105,127 @@ func PostPayHandler(c buffalo.Context) error {
 			return c.Render(200, r.JSON(response))
 		}
 
+		time.Sleep(500 * time.Millisecond)
+
 		elapsed = time.Since(start)
 	}
 
 	return c.Render(200, r.JSON(response))
+}
+
+func PostCancelHandler(c buffalo.Context) error {
+	userid := c.Session().Get("user_id").(string)
+	if userid == "" {
+		return c.Error(400, errors.New("no user in "))
+	}
+
+	databaseID, subID, err := models.GetSubByUserID(userid)
+	if err != nil {
+		return c.Error(400, err)
+	}
+
+	stripeSub, err := sub.Get(subID, nil)
+	if err != nil {
+		return c.Error(400, err)
+	}
+
+	params := &stripe.SubscriptionParams{
+		CancelAtPeriodEnd: stripe.Bool(true),
+	}
+
+	if _, err := sub.Update(stripeSub.ID, params); err != nil {
+		return c.Error(400, err)
+	}
+
+	if err := models.CancelSubscription(databaseID, time.Unix(stripeSub.CurrentPeriodEnd, 0)); err != nil {
+		return c.Error(400, err)
+	}
+
+	response := map[string]any{"success": true}
+	return c.Render(200, r.JSON(response))
+}
+
+func PostUncancelHandler(c buffalo.Context) error {
+	userid := c.Session().Get("user_id").(string)
+	if userid == "" {
+		return c.Error(400, errors.New("no user in "))
+	}
+
+	databaseID, subID, err := models.GetSubByUserID(userid)
+	if err != nil {
+		return c.Error(400, err)
+	}
+
+	stripeSub, err := sub.Get(subID, nil)
+	if err != nil {
+		return c.Error(400, err)
+	}
+
+	params := &stripe.SubscriptionParams{
+		CancelAtPeriodEnd: stripe.Bool(false),
+	}
+
+	if _, err := sub.Update(stripeSub.ID, params); err != nil {
+		return c.Error(400, err)
+	}
+
+	if err := models.UncancelSubscription(databaseID); err != nil {
+		return c.Error(400, err)
+	}
+
+	response := map[string]any{"success": true}
+	return c.Render(200, r.JSON(response))
+}
+
+func PostUpdatePayment(c buffalo.Context) error {
+	req := PaymentRequest{}
+	if err := c.Bind(&req); err != nil {
+		return c.Error(400, err)
+	}
+
+	userid := c.Session().Get("user_id").(string)
+	if userid == "" {
+		return c.Error(400, errors.New("no user in "))
+	}
+
+	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)
+	if err != nil || !firebaseUser.EmailVerified || firebaseUser.Email == "" {
+		return c.Error(400, err)
+	}
+
+	_, subID, err := models.GetSubByUserID(userid)
+	if err != nil {
+		return c.Error(400, err)
+	}
+
+	s, err := sub.Get(subID, nil)
+	if err != nil {
+		return c.Error(400, err)
+	}
+
+	params := &stripe.PaymentMethodAttachParams{
+		Customer: stripe.String(s.Customer.ID),
+	}
+	if _, err = paymentmethod.Attach(req.PaymentMethodID, params); err != nil {
+		return c.Error(400, err)
+	}
+
+	customerParams := &stripe.CustomerParams{
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: stripe.String(req.PaymentMethodID),
+		},
+	}
+	if _, err = customer.Update(s.Customer.ID, customerParams); err != nil {
+		return c.Error(400, err)
+	}
+
+	if _, err = sub.Update(s.ID, &stripe.SubscriptionParams{
+		DefaultPaymentMethod: stripe.String(req.PaymentMethodID),
+	}); err != nil {
+		return c.Error(400, err)
+	}
+
+	response := map[string]any{"success": true}
+	return c.Render(200, r.JSON(response))
+
 }

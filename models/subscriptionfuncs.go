@@ -1,6 +1,9 @@
 package models
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 func GetSubscription(uid string) (*Subscription, bool, error) {
 	subscription := &Subscription{}
@@ -14,4 +17,18 @@ func GetSubscription(uid string) (*Subscription, bool, error) {
 	}
 
 	return subscription, false, nil
+}
+
+func CreateSubscription(userID, subscriptionID string, expiresDate time.Time) error {
+	sub := Subscription{
+		UserID:         userID,
+		SubscriptionID: subscriptionID,
+		Processing:     true,
+		Ending:         false,
+		Paying:         false,
+		EndDate:        time.Time{},
+		ExpiresDate:    expiresDate,
+	}
+
+	return DB.Create(&sub)
 }

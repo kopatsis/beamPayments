@@ -14,7 +14,7 @@ func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 
 		path := c.Request().URL.Path
 
-		if path == "/multipass" || strings.HasPrefix(path, "/webhook") {
+		if path == "/multipass" || strings.HasPrefix(path, "/webhook") || strings.HasPrefix(path, "/administrative") {
 			return next(c)
 		}
 

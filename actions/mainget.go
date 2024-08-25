@@ -21,7 +21,7 @@ func GetHandler(c buffalo.Context) error {
 	}
 
 	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userID)
-	if err != nil || !firebaseUser.EmailVerified {
+	if err != nil || !firebaseUser.EmailVerified || firebaseUser.Email == "" {
 		return c.Redirect(http.StatusSeeOther, "/error")
 	}
 

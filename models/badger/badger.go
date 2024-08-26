@@ -127,3 +127,50 @@ func CheckCookie(uid, passcode string, created time.Time) (authorized bool, bann
 
 	return true, false
 }
+
+func AdminCookieModify(uid string, ban bool) (bool, error) {
+	var cookie Cookie
+	exists := true
+
+	err := DB.View(func(txn *badger.Txn) error {
+		item, err := txn.Get([]byte(uid))
+		if err != nil {
+			if err == badger.ErrKeyNotFound {
+				exists = false
+				return nil
+			}
+			return err
+		}
+
+		data, err := item.ValueCopy(nil)
+		if err != nil {
+			return err
+		}
+
+		return json.Unmarshal(data, &cookie)
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		return false, nil
+	}
+
+	if ban {
+		cookie.Banned = false
+	} else {
+		cookie.ResetDate = time.Now()
+	}
+
+	err = DB.Update(func(txn *badger.Txn) error {
+		return txn.Set([]byte(uid), cookie.MarshalBinary())
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

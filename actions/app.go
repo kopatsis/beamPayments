@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"beam_payments/actions/cron"
 	"beam_payments/actions/multipass"
 	"beam_payments/locales"
 	"beam_payments/middleware"
@@ -56,6 +57,8 @@ func App() *buffalo.App {
 		app.Use(csrf.New)
 
 		app.Use(middleware.CookieMiddleware)
+
+		cron.ScheduledTasks()
 
 		// Wraps each request in a transaction.
 		//   c.Value("tx").(*pop.Connection)

@@ -95,7 +95,7 @@ func PostPayHandler(c buffalo.Context) error {
 	response := map[string]any{"success": true}
 	elapsed := time.Duration(0)
 
-	for elapsed < 6*time.Second {
+	for elapsed < 10*time.Second {
 		inv, err := invoice.Get(newSub.LatestInvoice.ID, nil)
 		if err != nil {
 			return c.Render(200, r.JSON(response))
@@ -105,7 +105,7 @@ func PostPayHandler(c buffalo.Context) error {
 			return c.Render(200, r.JSON(response))
 		}
 
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 
 		elapsed = time.Since(start)
 	}

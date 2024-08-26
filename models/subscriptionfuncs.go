@@ -1,6 +1,7 @@
 package models
 
 import (
+	"log"
 	"strings"
 	"time"
 )
@@ -53,4 +54,54 @@ func GetSubByUserID(userID string) (int, string, error) {
 	}
 
 	return sub.ID, sub.SubscriptionID, nil
+}
+
+func ConfirmSubscirption(subscriptionID string, newExpiresDate time.Time) error {
+	var sub Subscription
+
+	err := DB.Where("subscription_id = ?", subscriptionID).First(&sub)
+	if err != nil {
+		return err
+	}
+
+	sub.Paying = true
+	sub.Processing = false
+	sub.ExpiresDate = newExpiresDate
+
+	return DB.Save(&sub)
+}
+
+func scheduledDelete() {
+	now := time.Now()
+	endDateThreshold := now.Add(-24 * time.Hour)
+	expiresDateThreshold := now.AddDate(0, -1, 0)
+
+	query := `
+		DELETE FROM subscriptions 
+		WHERE (end_date <= ? OR expires_date <= ?)
+	`
+
+	if err := DB.RawQuery(query, endDateThreshold, expiresDateThreshold).Exec(); err != nil {
+		log.Println("Error during scheduled delete:", err)
+	}
+}
+
+func scheduledUpdate() {
+	now := time.Now()
+	expiresDateThreshold := now.Add(-72 * time.Hour)
+
+	query := `
+		UPDATE subscriptions 
+		SET paying = false
+		WHERE expires_date <= ?
+	`
+
+	if err := DB.RawQuery(query, expiresDateThreshold).Exec(); err != nil {
+		log.Println("Error during scheduled update:", err)
+	}
+}
+
+func ScheduledSubscriptionMods() {
+	scheduledUpdate()
+	scheduledDelete()
 }

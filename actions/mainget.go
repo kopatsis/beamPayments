@@ -56,7 +56,7 @@ func GetHandler(c buffalo.Context) error {
 		}
 
 		if dbsub.Ending || s.CancelAtPeriodEnd {
-			c.Set("REndDate", time.Unix(s.CurrentPeriodEnd, 0))
+			c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
 			c.Set("EndDate", dbsub.EndDate)
 			return c.Render(http.StatusOK, r.HTML("all/ending.plush.html"))
 		}
@@ -86,7 +86,7 @@ func GetHandler(c buffalo.Context) error {
 		c.Set("LastFour", lastFour)
 		c.Set("Expiring", expiring)
 		c.Set("Secret", si.ClientSecret)
-		c.Set("REndDate", time.Unix(s.CurrentPeriodEnd, 0))
+		c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
 		c.Set("EndDate", dbsub.ExpiresDate)
 		return c.Render(http.StatusOK, r.HTML("all/admin.plush.html"))
 	}

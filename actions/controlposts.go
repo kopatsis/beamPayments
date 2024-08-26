@@ -3,6 +3,7 @@ package actions
 import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/models"
+	"beam_payments/models/badger"
 	"context"
 	"errors"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/customer"
-	"github.com/stripe/stripe-go/v72/invoice"
 	"github.com/stripe/stripe-go/v72/paymentmethod"
 	"github.com/stripe/stripe-go/v72/sub"
 )
@@ -95,18 +95,13 @@ func PostPayHandler(c buffalo.Context) error {
 	response := map[string]any{"success": true}
 	elapsed := time.Duration(0)
 
-	for elapsed < 10*time.Second {
-		inv, err := invoice.Get(newSub.LatestInvoice.ID, nil)
-		if err != nil {
+	for elapsed < 8*time.Second {
+
+		if badger.GetQueue(newSub.ID) {
 			return c.Render(200, r.JSON(response))
 		}
 
-		if inv.Status == "paid" {
-			return c.Render(200, r.JSON(response))
-		}
-
-		time.Sleep(1000 * time.Millisecond)
-
+		time.Sleep(333 * time.Millisecond)
 		elapsed = time.Since(start)
 	}
 

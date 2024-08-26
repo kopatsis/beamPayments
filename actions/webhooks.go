@@ -2,6 +2,7 @@ package actions
 
 import (
 	"beam_payments/models"
+	"beam_payments/models/badger"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -44,6 +45,10 @@ func HandleStripeWebhook(c buffalo.Context) error {
 		}
 
 		if err := models.ConfirmSubscirption(subscription.ID, time.Unix(subscription.CurrentPeriodEnd, 0)); err != nil {
+			return c.Error(400, err)
+		}
+
+		if err := badger.SetQueue(subscription.ID); err != nil {
 			return c.Error(400, err)
 		}
 

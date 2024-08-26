@@ -67,9 +67,9 @@ func App() *buffalo.App {
 		// Setup and use translations:
 		app.Use(translations())
 
-		app.GET("/oldshit", HomeHandler) // Starter
-
 		app.GET("/", GetHandler)
+		app.GET("/error", ErrorHandler)
+		app.GET("/loginerror", LoginErrorHandler)
 
 		app.POST("/subscription", PostPayHandler)
 		app.PATCH("/subscription/cancel", PostCancelHandler)

@@ -82,7 +82,7 @@ func App() *buffalo.App {
 
 		app.POST("/administrative/logout", HandleLogAllOut)
 		app.POST("/administrative/delete", HandleDeleteAccount)
-		app.POST("/extcheckpay/:id", ExternalGetHandler)
+		app.POST("/check/:id", ExternalGetHandler)
 
 		app.ServeFiles("/", http.FS(public.FS()))
 

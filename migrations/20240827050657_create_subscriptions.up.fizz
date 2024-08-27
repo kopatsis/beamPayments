@@ -7,5 +7,7 @@ create_table("subscriptions") {
 	t.Column("paying", "bool", {})
 	t.Column("end_date", "timestamp", {})
 	t.Column("expires_date", "timestamp", {})
+	t.Column("archived", "bool", {})
+	t.Column("archived_date", "timestamp", {})
 	t.Timestamps()
 }

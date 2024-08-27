@@ -19,6 +19,8 @@ type Subscription struct {
 	Paying         bool      `json:"paying" db:"paying"`
 	EndDate        time.Time `json:"end_date" db:"end_date"`
 	ExpiresDate    time.Time `json:"expires_date" db:"expires_date"`
+	Archived       bool      `json:"archived" db:"archived"`
+	ArchivedDate   time.Time `json:"archived_date" db:"archived_date"`
 	CreatedAt      time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -47,6 +49,7 @@ func (s *Subscription) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: s.SubscriptionID, Name: "SubscriptionID"},
 		&validators.TimeIsPresent{Field: s.EndDate, Name: "EndDate"},
 		&validators.TimeIsPresent{Field: s.ExpiresDate, Name: "ExpiresDate"},
+		&validators.TimeIsPresent{Field: s.ArchivedDate, Name: "ArchivedDate"},
 	), nil
 }
 

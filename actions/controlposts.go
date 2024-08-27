@@ -117,12 +117,14 @@ func PostCancelHandler(c buffalo.Context) error {
 		return c.Error(400, errors.New("no user in "))
 	}
 
-	databaseID, subID, err := models.GetSubByUserID(userid)
+	dbsub, exists, err := models.GetSubscription(userid)
 	if err != nil {
 		return c.Error(400, err)
+	} else if !exists {
+		return c.Error(400, errors.New("no unarchived (active) subscriptions for user"))
 	}
 
-	stripeSub, err := sub.Get(subID, nil)
+	stripeSub, err := sub.Get(dbsub.SubscriptionID, nil)
 	if err != nil {
 		return c.Error(400, err)
 	}
@@ -135,7 +137,7 @@ func PostCancelHandler(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	if err := models.CancelSubscription(databaseID, time.Unix(stripeSub.CurrentPeriodEnd, 0)); err != nil {
+	if err := models.CancelSubscription(dbsub.ID, time.Unix(stripeSub.CurrentPeriodEnd, 0)); err != nil {
 		return c.Error(400, err)
 	}
 
@@ -149,12 +151,14 @@ func PostUncancelHandler(c buffalo.Context) error {
 		return c.Error(400, errors.New("no user in "))
 	}
 
-	databaseID, subID, err := models.GetSubByUserID(userid)
+	dbsub, exists, err := models.GetSubscription(userid)
 	if err != nil {
 		return c.Error(400, err)
+	} else if !exists {
+		return c.Error(400, errors.New("no unarchived (active) subscriptions for user"))
 	}
 
-	stripeSub, err := sub.Get(subID, nil)
+	stripeSub, err := sub.Get(dbsub.SubscriptionID, nil)
 	if err != nil {
 		return c.Error(400, err)
 	}
@@ -167,7 +171,7 @@ func PostUncancelHandler(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	if err := models.UncancelSubscription(databaseID); err != nil {
+	if err := models.UncancelSubscription(dbsub.ID); err != nil {
 		return c.Error(400, err)
 	}
 
@@ -191,12 +195,14 @@ func PostUpdatePayment(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	_, subID, err := models.GetSubByUserID(userid)
+	dbsub, exists, err := models.GetSubscription(userid)
 	if err != nil {
 		return c.Error(400, err)
+	} else if !exists {
+		return c.Error(400, errors.New("no unarchived (active) subscriptions for user"))
 	}
 
-	s, err := sub.Get(subID, nil)
+	s, err := sub.Get(dbsub.SubscriptionID, nil)
 	if err != nil {
 		return c.Error(400, err)
 	}

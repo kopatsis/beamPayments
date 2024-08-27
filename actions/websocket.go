@@ -23,8 +23,8 @@ func WebSocketHandler(c buffalo.Context) error {
 	}
 	defer conn.Close()
 
-	timeout := time.After(3 * time.Minute)
-	ticker := time.NewTicker(1 * time.Second)
+	timeout := time.After(90 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 
 	for {

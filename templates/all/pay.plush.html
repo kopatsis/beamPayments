@@ -32,7 +32,7 @@
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const stripe = Stripe(
-        "pk_test_51PJLOAIstWH7VBmuSbipom0Z6Gy1Wj6wOjFtApmfGspxtTCywa9WEhP1UjB5XheYdCVXnUScy1zChx4lagbeZYvE002At1oIiP"
+        "pk_test_51PqnrdFKfZyWoeG1V6v3bJ9gBR5HTosFE2Awg8qEQ7HVWOpLP1QelADSBYHrUtBzxj3TdNTzITLjUrAlZNkWYLOT00EtiIbE8I"
       );
       const clientSecret = "<%= Secret %>";
 
@@ -62,7 +62,7 @@
           } else {
             const paymentMethodId = setupIntent.payment_method;
 
-            const response = await fetch("/process", {
+            const response = await fetch("/subscription", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

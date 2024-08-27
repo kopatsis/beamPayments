@@ -15,6 +15,7 @@ require (
 	github.com/gobuffalo/validate/v3 v3.3.3
 	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/gorilla/sessions v1.2.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/stripe/stripe-go/v72 v72.122.0
 	github.com/unrolled/secure v1.15.0
 	google.golang.org/api v0.170.0
@@ -71,7 +72,6 @@ require (
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect

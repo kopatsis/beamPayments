@@ -10,7 +10,7 @@ import (
 	"github.com/stripe/stripe-go/v72/sub"
 )
 
-func GetPaymentMethodDetails(subscriptionID string) (string, string, string, error) {
+func GetPaymentMethodDetails(subscriptionID string) (paymentType string, cardBrand string, lastFour string, expMonth int, expYear int, anyError error) {
 	subscription, err := sub.Get(subscriptionID, nil)
 	if err == nil && subscription.DefaultPaymentMethod != nil {
 		paymentMethod, err := paymentmethod.Get(subscription.DefaultPaymentMethod.ID, nil)
@@ -18,9 +18,9 @@ func GetPaymentMethodDetails(subscriptionID string) (string, string, string, err
 			switch paymentMethod.Type {
 			case stripe.PaymentMethodTypeCard:
 				card := paymentMethod.Card
-				return "Card", string(card.Brand), card.Last4, nil
+				return "Card", string(card.Brand), card.Last4, int(card.ExpMonth), int(card.ExpYear), nil
 			default:
-				return string(paymentMethod.Type), "", "", nil
+				return string(paymentMethod.Type), "", "", 0, 0, nil
 			}
 		}
 	}
@@ -44,9 +44,9 @@ func GetPaymentMethodDetails(subscriptionID string) (string, string, string, err
 						switch paymentMethod.Type {
 						case stripe.PaymentMethodTypeCard:
 							card := paymentMethod.Card
-							return "Card", string(card.Brand), card.Last4, nil
+							return "Card", string(card.Brand), card.Last4, int(card.ExpMonth), int(card.ExpYear), nil
 						default:
-							return string(paymentMethod.Type), "", "", nil
+							return string(paymentMethod.Type), "", "", 0, 0, nil
 						}
 					}
 				}
@@ -54,5 +54,5 @@ func GetPaymentMethodDetails(subscriptionID string) (string, string, string, err
 		}
 	}
 
-	return "", "", "", fmt.Errorf("no valid payment method found for subscription ID: %s", subscriptionID)
+	return "", "", "", 0, 0, fmt.Errorf("no valid payment method found for subscription ID: %s", subscriptionID)
 }

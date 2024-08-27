@@ -58,12 +58,12 @@ func GetHandler(c buffalo.Context) error {
 		}
 
 		if dbsub.Ending || s.CancelAtPeriodEnd {
-			c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
+			// c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
 			c.Set("EndDate", dbsub.EndDate)
 			return c.Render(http.StatusOK, r.HTML("all/ending.plush.html"))
 		}
 
-		paymentType, cardBrand, lastFour, err := stripefunc.GetPaymentMethodDetails(s.ID)
+		paymentType, cardBrand, lastFour, expMonth, expYear, err := stripefunc.GetPaymentMethodDetails(s.ID)
 		if err != nil {
 			return c.Redirect(http.StatusSeeOther, "/error")
 		}
@@ -87,8 +87,10 @@ func GetHandler(c buffalo.Context) error {
 		c.Set("CardBrand", cardBrand)
 		c.Set("LastFour", lastFour)
 		c.Set("Expiring", expiring)
+		c.Set("ExpMonth", expMonth)
+		c.Set("ExpYear", expYear)
 		c.Set("Secret", si.ClientSecret)
-		c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
+		// c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
 		c.Set("EndDate", dbsub.ExpiresDate)
 		return c.Render(http.StatusOK, r.HTML("all/admin.plush.html"))
 	}

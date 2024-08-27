@@ -29,6 +29,7 @@ func CreateSubscription(userID, subscriptionID string, expiresDate time.Time) er
 		Paying:         false,
 		EndDate:        time.Time{},
 		ExpiresDate:    expiresDate,
+		ArchivedDate:   time.Time{},
 	}
 
 	return DB.Create(&sub)
@@ -71,33 +72,19 @@ func ConfirmSubscirption(subscriptionID string, newExpiresDate time.Time) error 
 	return DB.Save(&sub)
 }
 
-// func scheduledDelete() {
-// 	now := time.Now()
-// 	endDateThreshold := now.Add(-24 * time.Hour)
-// 	expiresDateThreshold := now.AddDate(0, -1, 0)
-
-// 	query := `
-// 		DELETE FROM subscriptions
-// 		WHERE (end_date <= ? OR expires_date <= ?)
-// 	`
-
-// 	if err := DB.RawQuery(query, endDateThreshold, expiresDateThreshold).Exec(); err != nil {
-// 		log.Println("Error during scheduled delete:", err)
-// 	}
-// }
-
 func scheduledUpdate() {
 	now := time.Now()
-	endDateThreshold := now.Add(-24 * time.Hour)
-	expiresDateThreshold := now.Add(-72 * time.Hour)
+	endDateThreshold := now.Add(-24 * time.Hour).Format("2006-01-02 15:04:05")
+	expiresDateThreshold := now.Add(-72 * time.Hour).Format("2006-01-02 15:04:05")
+	archivedDate := now.Format("2006-01-02 15:04:05")
 
 	query := `
 		UPDATE subscriptions 
-		SET paying = false
+		SET paying = false, archived = true, archived_date = ?
 		WHERE (end_date <= ? OR expires_date <= ?)
 	`
 
-	if err := DB.RawQuery(query, endDateThreshold, expiresDateThreshold).Exec(); err != nil {
+	if err := DB.RawQuery(query, archivedDate, endDateThreshold, expiresDateThreshold).Exec(); err != nil {
 		log.Println("Error during scheduled update:", err)
 	}
 }

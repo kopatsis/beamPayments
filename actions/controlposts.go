@@ -93,18 +93,21 @@ func PostPayHandler(c buffalo.Context) error {
 	}
 
 	response := map[string]any{"success": true}
-	elapsed := time.Duration(0)
 
-	for elapsed < 8*time.Second {
+	ticker := time.NewTicker(333 * time.Millisecond)
+	defer ticker.Stop()
 
+	timeout := 8 * time.Second
+
+	for t := range ticker.C {
 		if badger.GetQueue(newSub.ID) {
 			return c.Render(200, r.JSON(response))
 		}
 
-		time.Sleep(333 * time.Millisecond)
-		elapsed = time.Since(start)
+		if t.Sub(start) >= timeout {
+			break
+		}
 	}
-
 	return c.Render(200, r.JSON(response))
 }
 

@@ -1,239 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Subscribe</title>
-    <script src="https://js.stripe.com/v3/"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.0/dist/cdn.min.js"
-      defer
-    ></script>
-  </head>
 
-  <body>
-    <div class="centerpage">
-      <div class="wholepage" x-data="{ showModal: false }">
-        <div class="loading" id="loader" style="display: none">
-          <div class="bouncer">
-            <img src="/static/images/i9logotsp.png" alt="sdafa" />
-          </div>
-          <div class="loader2"></div>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subscribe</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.0/dist/cdn.min.js" defer></script>
+</head>
 
-        <div
-          class="loghead"
-          :class="{ 'logWhite': showModal, 'logWhite-remove': !showModal }"
-          x-data="dimensionHandler()"
-          x-init="updateDimensions()"
-          @resize.window="updateDimensions()"
-          x-bind:style="{ fontSize: fontSize + 'px', height: height + 'px' }"
-        >
-          <div class="logheadtxt icon">
-            <a href="/" style="text-decoration: none; color: inherit"
-              >&#10224;</a
-            >
-          </div>
-          <b class="logheadtxt headname">i9 Admin</b>
-          <div
-            class="logheadtxt icon"
-            @click="showModal = !showModal"
-            x-text="showModal ? '&#10006;' : '&#9776;'"
-          ></div>
-        </div>
+<body>
 
-        <div
-          x-show="showModal"
-          class="modal"
-          @keydown.window.escape="showModal = false"
-        >
-          <div
-            x-show="showModal"
-            class="modal-content"
-            x-on:click.away="showModal = false"
-            x-data="dimensionFixHandler()"
-            x-init="updateDimensions()"
-            @resize.window="updateDimensions()"
-            x-bind:style="{ top: top + 'px' }"
-            x-bind:class="{ 'enter': showModal, 'leave': !showModal }"
-            x-transition:leave="transition: opacity 0.3s ease-in, transform 0.3s ease-in;"
-            x-transition:leave-start="opacity: 1; transform: translateY(0);"
-            x-transition:leave-end="opacity: 0; transform: translateY(-200px);"
-          >
-            <button class="menu-button">
-              <a href="/" style="text-decoration: none; color: inherit"
-                >Home Page</a
-              >
-            </button>
-            <% if !$.Mobile { %>
-            <button class="menu-button">
-              <a href="/pay" style="text-decoration: none; color: inherit"
-                >Giga Membership</a
-              >
-            </button>
-            <% } %>
-            <button class="menu-button">
-              <a href="/login" style="text-decoration: none; color: inherit"
-                >Login Page</a
-              >
-            </button>
-            <button class="menu-button">
-              <a href="/logout" style="text-decoration: none; color: inherit"
-                >Sign Out</a
-              >
-            </button>
-          </div>
-        </div>
+  <div id="loader" style="display: none;"></div>
 
-        <div class="innercontent">
-          <div class="miniHead">i9 Giga Membership Subscription</div>
-          <div>
-            Email: <b><%= $.Email %></b>
-          </div>
-          <form class="form" id="payment-form">
-            <div class="options">
-              <label>
-                <input
-                  type="radio"
-                  name="subscription"
-                  value="monthly"
-                  checked
-                />
-                Monthly
-              </label>
-              <label>
-                <input type="radio" name="subscription" value="yearly" />
-                Yearly
-              </label>
-            </div>
-            <div class="total" id="total">Total: $4.99</div>
-            <div id="payment-element"></div>
-            <button class="submit" type="submit">Subscribe</button>
-          </form>
-          <div style="color: rgb(222, 0, 0)" id="error-message"></div>
-        </div>
-      </div>
+  <div>
+    <div>
+      Email: <b>
+        <%= Email %>
+      </b>
     </div>
 
-    <script>
-      function dimensionHandler() {
-        return {
-          fontSize: 16,
-          height: 24,
-          updateDimensions() {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            const size = Math.min(width, height) * 0.08;
-            this.fontSize = Math.max(16, Math.min(48, size));
+    <form class="form" id="payment-form">
+      <div class="total" id="total">Total: $4.99</div>
+      <div id="payment-element"></div>
+      <button class="submit" type="submit">Subscribe</button>
+    </form>
 
-            const heightSize = Math.min(width, height) * 0.1;
-            this.height = Math.max(24, Math.min(54, heightSize));
-          },
-        };
-      }
+    <div style="color: rgb(222, 0, 0)" id="error-message"></div>
+  </div>
 
-      function dimensionFixHandler() {
-        return {
-          top: 24,
-          updateDimensions() {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            const heightSize = Math.min(width, height) * 0.1;
-            this.top = Math.max(24, Math.min(54, heightSize));
-          },
-        };
-      }
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const stripe = Stripe(
+        "pk_test_51PJLOAIstWH7VBmuSbipom0Z6Gy1Wj6wOjFtApmfGspxtTCywa9WEhP1UjB5XheYdCVXnUScy1zChx4lagbeZYvE002At1oIiP"
+      );
+      const clientSecret = "<%= Secret %>";
 
-      document.addEventListener("DOMContentLoaded", async () => {
-        const stripe = Stripe(
-          "pk_test_51PJLOAIstWH7VBmuSbipom0Z6Gy1Wj6wOjFtApmfGspxtTCywa9WEhP1UjB5XheYdCVXnUScy1zChx4lagbeZYvE002At1oIiP"
-        );
-        const clientSecret = "<%= $.ClientSecret %>";
+      const elements = stripe.elements({ clientSecret });
+      const paymentElement = elements.create("payment");
+      paymentElement.mount("#payment-element");
 
-        const elements = stripe.elements({ clientSecret });
-        const paymentElement = elements.create("payment");
-        paymentElement.mount("#payment-element");
+      const form = document.getElementById("payment-form");
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-        const updateTotal = () => {
-          const subscriptionType = document.querySelector(
-            'input[name="subscription"]:checked'
-          ).value;
-          const totalElement = document.getElementById("total");
-          if (subscriptionType === "yearly") {
-            totalElement.textContent = "Total: $49.99";
-          } else {
-            totalElement.textContent = "Total: $4.99";
-          }
-        };
+        document.getElementById("loader").style.display = "flex";
 
-        document
-          .querySelectorAll('input[name="subscription"]')
-          .forEach((input) => {
-            input.addEventListener("change", updateTotal);
+        try {
+
+          const { setupIntent, error } = await stripe.confirmSetup({
+            elements,
+            confirmParams: {
+              return_url: window.location.href,
+            },
+            redirect: "if_required",
           });
 
-        const form = document.getElementById("payment-form");
-        form.addEventListener("submit", async (event) => {
-          event.preventDefault();
+          if (error) {
+            document.getElementById("error-message").textContent =
+              error.message;
+          } else {
+            const paymentMethodId = setupIntent.payment_method;
 
-          const startTime = Date.now();
-
-          document.getElementById("loader").style.display = "flex";
-
-          try {
-            const subscriptionType = document.querySelector(
-              'input[name="subscription"]:checked'
-            ).value;
-            let priceId;
-            if (subscriptionType === "yearly") {
-              priceId = "price_1PJfbpIstWH7VBmu1nToVdC9";
-            } else {
-              priceId = "price_1PJfbQIstWH7VBmuNNsoLTN2";
-            }
-
-            const { setupIntent, error } = await stripe.confirmSetup({
-              elements,
-              confirmParams: {
-                return_url: window.location.href,
+            const response = await fetch("/process", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
               },
-              redirect: "if_required",
+              credentials: "include",
+              body: JSON.stringify({ paymentMethodID: paymentMethodId }),
             });
 
-            if (error) {
-              document.getElementById("error-message").textContent =
-                error.message;
+            if (response.ok) {
+              location.reload();
             } else {
-              const paymentMethodId = setupIntent.payment_method;
-
-              const response = await fetch("/process", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({ paymentMethodId, priceId }),
-              });
-
-              if (response.ok) {
-                const elapsedTime = Date.now() - startTime;
-                const remainingTime = Math.max(4000 - elapsedTime, 0);
-                setTimeout(() => {
-                  location.reload(); // Refresh the page on success
-                }, remainingTime);
-              } else {
-                const errorData = await response.json();
-                document.getElementById("error-message").textContent =
-                  errorData.error;
-              }
+              const errorData = await response.json();
+              document.getElementById("error-message").textContent =
+                errorData.error;
             }
-          } catch (err) {
-            document.getElementById("error-message").textContent =
-              "Error processing payment, please try again.";
-          } finally {
-            document.getElementById("loader").style.display = "none";
           }
-        });
+        } catch (err) {
+          document.getElementById("error-message").textContent =
+            "Error processing payment, please try again.";
+        } finally {
+          document.getElementById("loader").style.display = "none";
+        }
       });
-    </script>
-  </body>
+    });
+  </script>
+
+
+</body>
+
 </html>

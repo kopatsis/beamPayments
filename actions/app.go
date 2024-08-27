@@ -84,6 +84,8 @@ func App() *buffalo.App {
 		app.POST("/administrative/delete", HandleDeleteAccount)
 		app.POST("/check/:id", ExternalGetHandler)
 
+		app.GET("/websocket/:id", WebSocketHandler)
+
 		app.ServeFiles("/", http.FS(public.FS()))
 
 		defer badger.Close()

@@ -4,6 +4,7 @@ import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/stripefunc"
 	"beam_payments/models"
+	"beam_payments/models/badger"
 	"context"
 	"net/http"
 	"time"
@@ -51,7 +52,8 @@ func GetHandler(c buffalo.Context) error {
 			return c.Redirect(http.StatusSeeOther, "/error")
 		}
 
-		if dbsub.Processing {
+		if dbsub.Processing && !badger.GetQueue(s.ID) {
+			c.Set("ID", s.ID)
 			return c.Render(http.StatusOK, r.HTML("all/processing.plush.html"))
 		}
 

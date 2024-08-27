@@ -68,7 +68,6 @@ func App() *buffalo.App {
 		app.Use(translations())
 
 		app.GET("/", GetHandler)
-		app.GET("/error", ErrorHandler)
 		app.GET("/loginerror", LoginErrorHandler)
 
 		app.POST("/subscription", PostPayHandler)

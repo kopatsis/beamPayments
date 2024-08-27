@@ -18,17 +18,24 @@ import (
 func GetHandler(c buffalo.Context) error {
 	userID := c.Session().Get("user_id").(string)
 	if userID == "" {
-		return c.Redirect(http.StatusSeeOther, "/error")
+		c.Set("Error", "No user id in cookie available")
+		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 	}
 
 	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userID)
 	if err != nil || !firebaseUser.EmailVerified || firebaseUser.Email == "" {
-		return c.Redirect(http.StatusSeeOther, "/error")
+		if err != nil {
+			c.Set("Error", err.Error())
+		} else {
+			c.Set("Error", "Email not verified or no email at all.")
+		}
+		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 	}
 
 	dbsub, exists, err := models.GetSubscription(userID)
 	if err != nil {
-		return c.Redirect(http.StatusSeeOther, "/error")
+		c.Set("Error", err.Error())
+		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 	}
 	c.Set("Email", firebaseUser.Email)
 
@@ -40,7 +47,8 @@ func GetHandler(c buffalo.Context) error {
 		}
 		si, err := setupintent.New(params)
 		if err != nil {
-			return c.Redirect(http.StatusSeeOther, "/error")
+			c.Set("Error", err.Error())
+			return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 		}
 		c.Set("Secret", si.ClientSecret)
 
@@ -49,7 +57,8 @@ func GetHandler(c buffalo.Context) error {
 
 		s, err := sub.Get(dbsub.SubscriptionID, nil)
 		if err != nil {
-			return c.Redirect(http.StatusSeeOther, "/error")
+			c.Set("Error", err.Error())
+			return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 		}
 
 		if dbsub.Processing && !badger.GetQueue(s.ID) {
@@ -65,7 +74,8 @@ func GetHandler(c buffalo.Context) error {
 
 		paymentType, cardBrand, lastFour, expMonth, expYear, err := stripefunc.GetPaymentMethodDetails(s.ID)
 		if err != nil {
-			return c.Redirect(http.StatusSeeOther, "/error")
+			c.Set("Error", err.Error())
+			return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 		}
 
 		params := &stripe.SetupIntentParams{
@@ -75,7 +85,8 @@ func GetHandler(c buffalo.Context) error {
 		}
 		si, err := setupintent.New(params)
 		if err != nil {
-			return c.Redirect(http.StatusSeeOther, "/error")
+			c.Set("Error", err.Error())
+			return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 		}
 
 		expiring := false

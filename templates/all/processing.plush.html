@@ -1,58 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Processing</title>
-    <script src="https://js.stripe.com/v3/"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.0/dist/cdn.min.js" defer></script>
-</head>
+  </head>
 
-<body>
-
-    <div id="loadera" style="display: none;"></div>
+  <body>
+    <div id="loader" style="display: none"></div>
 
     <div>
-        <div>
-            Email: <b>
-                <%= Email %>
-            </b>
-        </div>
+      <div>Email: <b> <%= Email %> </b></div>
 
-        <div>Your subscription is taking an abnormally long time to process with your payment provider.</div>
+      <div>
+        Your subscription is taking an abnormally long time to process with your
+        payment provider.
+      </div>
 
-        <div>Hang tight while we do our thing and make sure it works. This page will automatically refresh when the
-            payment fully processes.</div>
+      <div>
+        Hang tight while we do our thing and make sure it works. This page will
+        automatically refresh when the payment fully processes.
+      </div>
 
-        <div style="color: rgb(222, 0, 0)" id="error-message"></div>
+      <div style="color: rgb(222, 0, 0)" id="error-message"></div>
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var id = "<%= ID %>";
-            var socket = new WebSocket("ws://" + window.location.host + "/websocket/" + id);
+      document.addEventListener("DOMContentLoaded", function () {
+        var id = "<%= ID %>";
+        var socket = new WebSocket(
+          "ws://" + window.location.host + "/websocket/" + id
+        );
 
-            socket.onmessage = function (event) {
-                if (event.data === "refresh") {
-                    location.reload();
-                }
-            };
+        socket.onmessage = function (event) {
+          if (event.data === "refresh") {
+            location.reload();
+          }
+        };
 
-            socket.onmessage = function (event) {
-                if (event.data === "error") {
-                    document.getElementById("error-message").textContent =
-                        "Timeout Error: We will reach out to you by email to update you on your subscription. Sorry :(";
-                }
-            };
+        socket.onmessage = function (event) {
+          if (event.data === "error") {
+            document.getElementById("error-message").textContent =
+              "Timeout Error: We will reach out to you by email to update you on your subscription. Sorry :(";
+          }
+        };
 
-            socket.onclose = function (event) {
-                console.log("WebSocket closed:", event);
-            };
-        });
+        socket.onclose = function (event) {
+          console.log("WebSocket closed:", event);
+        };
+      });
     </script>
-
-
-</body>
-
+  </body>
 </html>

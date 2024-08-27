@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -21,6 +22,13 @@ func GetSubscription(uid string) (*Subscription, bool, error) {
 }
 
 func CreateSubscription(userID, subscriptionID string, expiresDate time.Time) error {
+	count, err := DB.Where("user_id = ? AND archived = false", userID).Count(&Subscription{})
+	if err != nil {
+		return err
+	} else if count > 0 {
+		return fmt.Errorf("an active subscription already exists for user_id: %s", userID)
+	}
+
 	sub := Subscription{
 		UserID:         userID,
 		SubscriptionID: subscriptionID,
@@ -29,6 +37,7 @@ func CreateSubscription(userID, subscriptionID string, expiresDate time.Time) er
 		Paying:         false,
 		EndDate:        time.Time{},
 		ExpiresDate:    expiresDate,
+		Archived:       false,
 		ArchivedDate:   time.Time{},
 	}
 

@@ -86,5 +86,4 @@ func scheduledUpdate() {
 
 func ScheduledSubscriptionMods() {
 	scheduledUpdate()
-	// scheduledDelete()
 }

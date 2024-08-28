@@ -19,7 +19,7 @@ func Multipass(c buffalo.Context) error {
 
 	uid, err := firebaseApp.VerifyTokenAndReturnUID(c)
 	if err != nil {
-		return c.Redirect(http.StatusSeeOther, originalURL+"/login?red=t")
+		return c.Redirect(http.StatusSeeOther, originalURL+"/login?circleRedir=t")
 	}
 
 	passcode, banned, err := badger.CreateCookie(uid)

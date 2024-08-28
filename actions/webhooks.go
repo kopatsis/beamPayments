@@ -15,6 +15,8 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/charge"
+	"github.com/stripe/stripe-go/v72/invoice"
 	"github.com/stripe/stripe-go/v72/sub"
 	"github.com/stripe/stripe-go/v72/webhook"
 )
@@ -85,7 +87,48 @@ func HandleStripeWebhook(c buffalo.Context) error {
 
 	case "charge.dispute.created":
 
-		// Email ME personally
+		chargeID, ok := event.Data.Object["charge"].(string)
+		if !ok {
+			return c.Error(400, errors.New("unable to extract charge ID from event"))
+		}
+
+		chargeObj, err := charge.Get(chargeID, nil)
+		if err != nil {
+			return c.Error(400, err)
+		}
+
+		invoiceID := chargeObj.Invoice.ID
+		if invoiceID == "" {
+			return c.Error(400, errors.New("no invoice associated with this charge"))
+		}
+
+		invoiceObj, err := invoice.Get(invoiceID, nil)
+		if err != nil {
+			return c.Error(400, err)
+		}
+
+		subscriptionID := invoiceObj.Subscription.ID
+
+		subscript, notInDB, err := models.GetSubscriptionBySubID(subscriptionID)
+		if err != nil {
+			return c.Error(400, err)
+		} else if notInDB {
+			return c.Error(400, errors.New("chargeback for an inexistent sub: "+subscriptionID))
+		}
+
+		email := "NO EMAIL FOR THIS ONE"
+
+		firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), subscript.UserID)
+		if err == nil && firebaseUser.Email != "" {
+			email = firebaseUser.Email
+		}
+
+		if err := sendgrid.SendChargeBackAlert(subscriptionID, subscript.UserID, email, subscript.Archived, subscript.ID); err != nil {
+			return c.Error(400, err)
+		}
+
+		response := map[string]any{"success": true}
+		return c.Render(200, r.JSON(response))
 
 	}
 

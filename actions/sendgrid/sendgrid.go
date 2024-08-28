@@ -37,6 +37,29 @@ func SendFormSubmissionEmail(formEmail, formName, formSubject, formBody string) 
 	return nil
 }
 
+func SendChargeBackAlert(subID, userID, userEmail string, archived bool, dbID int) error {
+	from := mail.NewEmail("No Reply", "donotreply@shortentrack.com")
+	to := mail.NewEmail("Admin", "admin@shortentrack.com")
+	subject := "ALERT CHARGEBACK: " + subID
+
+	toMe := fmt.Sprintf("Someone tried to chargeback >:(\n\nDetails:\nSubscription ID: %s\nUser ID: %s\nEmail: %s\nArchived: %t\nDatabase ID: %d\n", subID, userID, userEmail, archived, dbID)
+
+	content := mail.NewContent("text/plain", toMe)
+
+	message := mail.NewV3MailInit(from, subject, to, content)
+
+	response, err := SGClient.Send(message)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode >= 400 {
+		return fmt.Errorf("failed to send email: %s", response.Body)
+	}
+
+	return nil
+}
+
 func SendSuccessEmail(userEmail string, isFirst bool) error {
 	from := mail.NewEmail("Shorten Track Team", "donotreply@shortentrack.com")
 	to := mail.NewEmail(strings.Split(userEmail, "@")[0], userEmail)

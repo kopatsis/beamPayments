@@ -21,6 +21,20 @@ func GetSubscription(uid string) (*Subscription, bool, error) {
 	return subscription, false, nil
 }
 
+func GetSubscriptionBySubID(subID string) (*Subscription, bool, error) {
+	subscription := &Subscription{}
+
+	err := DB.Where("subscription_id = ?", subID).First(subscription)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return nil, true, nil
+		}
+		return nil, false, err
+	}
+
+	return subscription, false, nil
+}
+
 func CreateSubscription(userID, subscriptionID string, expiresDate time.Time) error {
 	count, err := DB.Where("user_id = ? AND archived = false", userID).Count(&Subscription{})
 	if err != nil {

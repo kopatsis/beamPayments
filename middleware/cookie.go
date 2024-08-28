@@ -3,11 +3,30 @@ package middleware
 import (
 	"beam_payments/models/badger"
 	"errors"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
 )
+
+func errorSplit(c buffalo.Context, err error, banned bool) error {
+	method := c.Request().Method
+	if method == "GET" {
+		if !banned {
+			loginURL := os.Getenv("OG_URL")
+			if loginURL == "" {
+				loginURL = "https://shortentrack.com"
+			}
+			return c.Redirect(http.StatusSeeOther, loginURL+"/login?circleRedir=t")
+		} else {
+			return c.Redirect(http.StatusSeeOther, "/loginerror")
+		}
+
+	}
+	return c.Error(401, err)
+}
 
 func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
@@ -23,24 +42,24 @@ func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 		dateStr := c.Session().Get("date").(string)
 
 		if userID == "" || passcodeStr == "" || dateStr == "" {
-			return c.Error(401, errors.New("unauthorized: missing session data"))
+			return errorSplit(c, errors.New("unauthorized: missing session data"), false)
 		}
 
 		date, err := time.Parse(time.RFC3339, dateStr)
 		if err != nil {
-			return c.Error(401, errors.New("unauthorized: missing session data"))
+			return errorSplit(c, errors.New("unauthorized: missing session data"), false)
 		}
 
 		authorized, banned := badger.CheckCookie(userID, passcodeStr, date)
 
 		if !authorized {
-			return c.Error(400, errors.New("unauthorized: not logged in"))
+			return errorSplit(c, errors.New("unauthorized: not logged in"), false)
 		}
 
 		if banned {
 			c.Session().Clear()
 			c.Session().Save()
-			return c.Error(400, errors.New("unauthorized: user does not exist"))
+			return errorSplit(c, errors.New("unauthorized: user does not exist"), true)
 		}
 
 		return next(c)

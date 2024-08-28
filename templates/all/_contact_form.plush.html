@@ -1,0 +1,65 @@
+<%= partial() { %>
+    <div x-data="{ showForm: false }">
+      <button @click="showForm = true">Contact Us</button>
+  
+      <div x-show="showForm">
+        <button @click="showForm = false">X</button>
+        <div x-data="{ email: '<%= Email %>', subject: '', body: '', message: '', success: false }">
+          <form x-show="!success" @submit.prevent="submitForm">
+            <div>
+              <label for="email">Email:</label>
+              <input type="email" id="email" x-model="email">
+            </div>
+            <div>
+              <label for="subject">Subject:</label>
+              <input type="text" id="subject" x-model="subject">
+            </div>
+            <div>
+              <label for="body">Body:</label>
+              <textarea id="body" x-model="body"></textarea>
+            </div>
+  
+            <div id="cf-turnstile" class="cf-turnstile" data-sitekey="0x4AAAAAAAiN0D-hYmv3ulQQ"></div>
+  
+            <button type="submit">Send</button>
+          </form>
+  
+          <div x-show="success" x-text="message"></div>
+        </div>
+      </div>
+    </div>
+  
+    <script>
+    function submitForm() {
+          fetch('/helpemail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              email: this.email,
+              subject: this.subject,
+              body: this.body,
+              'cf-turnstile-response': document.querySelector('#cf-turnstile input').value
+            })
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error();
+              }
+              return response.json();
+            })
+            .then(data => {
+              this.message = data.message || 'Form submitted successfully!';
+            })
+            .catch(() => {
+              this.message = 'Failed to send the email. Please try again later.';
+            })
+            .finally(() => {
+              this.success = true;
+            });
+        }
+    </script>
+  <% } %>
+  

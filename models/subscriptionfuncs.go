@@ -52,19 +52,24 @@ func UncancelSubscription(id int) error {
 	return DB.RawQuery("UPDATE subscriptions SET ending = ?, end_date = ?, updated_at = ? WHERE id = ?", false, time.Time{}, time.Now(), id).Exec()
 }
 
-func ConfirmSubscirption(subscriptionID string, newExpiresDate time.Time) error {
+func ConfirmSubscription(subscriptionID string, newExpiresDate time.Time) (string, error) {
 	var sub Subscription
 
 	err := DB.Where("subscription_id = ?", subscriptionID).First(&sub)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	sub.Paying = true
 	sub.Processing = false
 	sub.ExpiresDate = newExpiresDate
 
-	return DB.Save(&sub)
+	err = DB.Save(&sub)
+	if err != nil {
+		return "", err
+	}
+
+	return sub.UserID, nil
 }
 
 func scheduledUpdate() {

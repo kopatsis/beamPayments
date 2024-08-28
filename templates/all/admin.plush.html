@@ -82,8 +82,12 @@
 
           <div x-show="showForm">
             <button @click="showForm = false">X</button>
-            <div x-data="{ email: '<%= Email %>', subject: '', body: '', message: '', success: false }">
+            <div x-data="{ email: '<%= Email %>', name: '', subject: '', body: '', message: '', success: false }">
               <form x-show="!success" @submit.prevent="submitForm">
+                <div>
+                  <label for="name">Name:</label>
+                  <input type="text" id="name" x-model="name">
+                </div>
                 <div>
                   <label for="email">Email:</label>
                   <input type="email" id="email" x-model="email">
@@ -119,6 +123,7 @@
         },
         credentials: 'include',
         body: JSON.stringify({
+          name: this.name,
           email: this.email,
           subject: this.subject,
           body: this.body,

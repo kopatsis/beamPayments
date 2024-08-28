@@ -15,10 +15,10 @@ func ExternalGetHandler(c buffalo.Context) error {
 		return c.Error(500, errors.New("no passcode exists on backend"))
 	}
 
-	userID := c.Request().Header.Get("X-User-ID")
-	if userID == "" {
+	passcode := c.Request().Header.Get("X-Passcode-ID")
+	if passcode == "" {
 		return c.Error(400, errors.New("no passcode provided"))
-	} else if userID != shouldBe {
+	} else if passcode != shouldBe {
 		return c.Error(400, errors.New("incorrect passcode provided"))
 	}
 

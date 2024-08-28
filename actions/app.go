@@ -83,6 +83,9 @@ func App() *buffalo.App {
 		app.POST("/administrative/delete", HandleDeleteAccount)
 		app.POST("/check/:id", ExternalGetHandler)
 
+		app.POST("/helpemail", InternalEmailHandler)
+		app.POST("/administrative/postemail", ExternalEmailHandler)
+
 		app.GET("/websocket/:id", WebSocketHandler)
 
 		app.ServeFiles("/", http.FS(public.FS()))

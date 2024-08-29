@@ -242,6 +242,9 @@ func PostUpdatePayment(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
+	// Don't want to ACTUALLY error out for sending the email if everything else worked
+	sendgrid.SendPaymentUpdateEmail(firebaseUser.Email)
+
 	response := map[string]any{"success": true}
 	return c.Render(200, r.JSON(response))
 

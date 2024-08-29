@@ -148,3 +148,29 @@ func SendCancelEmail(userEmail string, isCancelled bool) error {
 
 	return nil
 }
+
+func SendPaymentUpdateEmail(userEmail string) error {
+	from := mail.NewEmail("Shorten Track Team", "donotreply@shortentrack.com")
+	to := mail.NewEmail(strings.Split(userEmail, "@")[0], userEmail)
+
+	subject := "Your Default Payment Information Has Been Updated"
+	plainTextContent := "We wanted to let you know that your default payment information for Shorten Track has been successfully updated. You can manage your payment methods at pay.shortentrack.com.\n\nBest regards,\nThe Shorten Track Team"
+	htmlTextContent := "<p>We wanted to let you know that your default payment information for <strong>Shorten Track</strong> has been successfully updated. You can manage your payment methods at <a href='https://pay.shortentrack.com'>pay.shortentrack.com</a>.</p><p>Best regards,<br>The Shorten Track Team</p>"
+
+	content := mail.NewContent("text/plain", plainTextContent)
+	htmlContent := mail.NewContent("text/html", htmlTextContent)
+
+	message := mail.NewV3MailInit(from, subject, to, content)
+	message.AddContent(htmlContent)
+
+	response, err := SGClient.Send(message)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode >= 400 {
+		return fmt.Errorf("failed to send email: %s", response.Body)
+	}
+
+	return nil
+}

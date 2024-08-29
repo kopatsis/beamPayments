@@ -89,3 +89,28 @@ func SendSuccessEmail(userEmail string, isFirst bool) error {
 
 	return nil
 }
+
+func SendFailureEmail(userEmail string) error {
+	from := mail.NewEmail("Shorten Track Team", "donotreply@shortentrack.com")
+	to := mail.NewEmail(strings.Split(userEmail, "@")[0], userEmail)
+
+	subject := "Your Payment Method Failed for Your Shorten Track Membership"
+
+	content := mail.NewContent("text/plain", "We noticed an issue with your payment for Shorten Track.\n\nUnfortunately, we were unable to process your payment for this month's membership. Please update your payment information at pay.shortentrack.com to continue enjoying our services.\n\nBest regards,\nThe Shorten Track Team")
+
+	htmlContent := mail.NewContent("text/html", "<p>We noticed an issue with your payment for <strong>Shorten Track.</strong></p><p>Unfortunately, we were unable to process your payment for this month's membership. Please update your payment information at <a href='https://pay.shortentrack.com'>pay.shortentrack.com</a> to continue enjoying our services.</p><p>Best regards,<br>The Shorten Track Team</p>")
+
+	message := mail.NewV3MailInit(from, subject, to, content)
+	message.AddContent(htmlContent)
+
+	response, err := SGClient.Send(message)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode >= 400 {
+		return fmt.Errorf("failed to send email: %s", response.Body)
+	}
+
+	return nil
+}

@@ -75,7 +75,34 @@ func HandleStripeWebhook(c buffalo.Context) error {
 
 	case "invoice.payment_failed":
 
-		// Email user payment failed and will lose payinng in 3 days (72 hours) if not. Even if after, can re-activate with payment
+		var invoice stripe.Invoice
+		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
+			return c.Error(400, err)
+		}
+
+		subscription, err := sub.Get(invoice.Subscription.ID, nil)
+		if err != nil {
+			return c.Error(400, err)
+		}
+
+		subscript, notInDB, err := models.GetSubscriptionBySubID(subscription.ID)
+		if err != nil {
+			return c.Error(400, err)
+		} else if notInDB {
+			return c.Error(400, errors.New("failed payment for an inexistent sub: "+subscription.ID))
+		}
+
+		firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), subscript.UserID)
+		if err != nil {
+			return c.Error(400, err)
+		}
+
+		if err := sendgrid.SendFailureEmail(firebaseUser.Email); err != nil {
+			return c.Error(400, errors.New("didn't send email but everything else worked: "+err.Error()))
+		}
+
+		response := map[string]any{"success": true}
+		return c.Render(200, r.JSON(response))
 
 	case "customer.subscription.created":
 

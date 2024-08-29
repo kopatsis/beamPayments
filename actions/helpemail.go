@@ -9,11 +9,11 @@ import (
 )
 
 type ContactForm struct {
-	Email   string `json:"email"`
-	Name    string `json:"name"`
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
-	Captcha string `json:"cf-turnstile-response"`
+	Email   string `form:"email"`
+	Name    string `form:"name"`
+	Subject string `form:"subject"`
+	Body    string `form:"body"`
+	Captcha string `form:"cf-turnstile-response"`
 }
 
 func ExternalEmailHandler(c buffalo.Context) error {

@@ -33,7 +33,7 @@ func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 
 		path := c.Request().URL.Path
 
-		if path == "/multipass" || strings.HasPrefix(path, "/webhook") || strings.HasPrefix(path, "/administrative") || strings.HasPrefix(path, "/check") {
+		if strings.HasPrefix(path, "/test") || path == "/multipass" || strings.HasPrefix(path, "/webhook") || strings.HasPrefix(path, "/administrative") || strings.HasPrefix(path, "/check") {
 			return next(c)
 		}
 

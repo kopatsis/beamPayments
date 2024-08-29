@@ -88,6 +88,10 @@ func App() *buffalo.App {
 
 		app.GET("/websocket/:id", WebSocketHandler)
 
+		app.GET("/test/start", GoogleLogin)
+		app.GET("/test/here", StartLogin)
+		app.GET("/test/callback", GoogleCallback)
+
 		app.ServeFiles("/", http.FS(public.FS()))
 
 		defer badger.Close()

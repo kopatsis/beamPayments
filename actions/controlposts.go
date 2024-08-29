@@ -2,6 +2,7 @@ package actions
 
 import (
 	"beam_payments/actions/firebaseApp"
+	"beam_payments/actions/sendgrid"
 	"beam_payments/models"
 	"beam_payments/models/badger"
 	"context"
@@ -141,6 +142,12 @@ func PostCancelHandler(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
+	// Don't want to ACTUALLY error out for sending the email if everything else worked
+	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)
+	if err == nil && firebaseUser.Email != "" {
+		sendgrid.SendCancelEmail(firebaseUser.Email, true)
+	}
+
 	response := map[string]any{"success": true}
 	return c.Render(200, r.JSON(response))
 }
@@ -173,6 +180,12 @@ func PostUncancelHandler(c buffalo.Context) error {
 
 	if err := models.UncancelSubscription(dbsub.ID); err != nil {
 		return c.Error(400, err)
+	}
+
+	// Don't want to ACTUALLY error out for sending the email if everything else worked
+	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)
+	if err == nil && firebaseUser.Email != "" {
+		sendgrid.SendCancelEmail(firebaseUser.Email, false)
 	}
 
 	response := map[string]any{"success": true}

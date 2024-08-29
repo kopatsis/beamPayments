@@ -114,3 +114,37 @@ func SendFailureEmail(userEmail string) error {
 
 	return nil
 }
+
+func SendCancelEmail(userEmail string, isCancelled bool) error {
+	from := mail.NewEmail("Shorten Track Team", "donotreply@shortentrack.com")
+	to := mail.NewEmail(strings.Split(userEmail, "@")[0], userEmail)
+
+	var subject, plainTextContent, htmlTextContent string
+
+	if isCancelled {
+		subject = "Your Shorten Track Membership Has Been Cancelled"
+		plainTextContent = "We're sorry to see you go. Your Shorten Track membership has been cancelled. If this was a mistake or you wish to rejoin, please update your membership information at pay.shortentrack.com.\n\nBest regards,\nThe Shorten Track Team"
+		htmlTextContent = "<p>We're sorry to see you go. Your <strong>Shorten Track</strong> membership has been cancelled. If this was a mistake or you wish to rejoin, please update your membership information at <a href='https://pay.shortentrack.com'>pay.shortentrack.com</a>.</p><p>Best regards,<br>The Shorten Track Team</p>"
+	} else {
+		subject = "Your Shorten Track Membership Has Been Reactivated"
+		plainTextContent = "Welcome back! Your Shorten Track membership has been reactivated. You can manage your membership anytime at pay.shortentrack.com.\n\nBest regards,\nThe Shorten Track Team"
+		htmlTextContent = "<p>Welcome back! Your <strong>Shorten Track</strong> membership has been reactivated. You can manage your membership anytime at <a href='https://pay.shortentrack.com'>pay.shortentrack.com</a>.</p><p>Best regards,<br>The Shorten Track Team</p>"
+	}
+
+	content := mail.NewContent("text/plain", plainTextContent)
+	htmlContent := mail.NewContent("text/html", htmlTextContent)
+
+	message := mail.NewV3MailInit(from, subject, to, content)
+	message.AddContent(htmlContent)
+
+	response, err := SGClient.Send(message)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode >= 400 {
+		return fmt.Errorf("failed to send email: %s", response.Body)
+	}
+
+	return nil
+}

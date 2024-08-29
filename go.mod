@@ -16,6 +16,7 @@ require (
 	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/gorilla/sessions v1.2.1
 	github.com/gorilla/websocket v1.5.3
+	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stripe/stripe-go/v72 v72.122.0
 	github.com/unrolled/secure v1.15.0
 	google.golang.org/api v0.170.0
@@ -99,7 +100,6 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
-	github.com/sendgrid/sendgrid-go v3.16.0+incompatible // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect

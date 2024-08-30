@@ -40,14 +40,18 @@ func GoogleLogin(c buffalo.Context) error {
 
 func GoogleCallback(c buffalo.Context) error {
 	code := c.Param("code")
+	fmt.Println(code)
+
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		return c.Error(http.StatusInternalServerError, err)
 	}
 
 	idToken := token.Extra("id_token").(string)
+	fmt.Println(token.AccessToken)
 	verifiedToken, err := firebaseApp.FirebaseAuth.VerifyIDToken(context.Background(), idToken)
 	if err != nil {
+		fmt.Println(idToken)
 		fmt.Println(err.Error())
 		return c.Error(http.StatusUnauthorized, err)
 	}

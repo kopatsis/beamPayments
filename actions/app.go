@@ -84,7 +84,7 @@ func App() *buffalo.App {
 		app.POST("/check/:id", ExternalGetHandler)
 
 		app.POST("/helpemail", InternalEmailHandler)
-		app.POST("/administrative/postemail", ExternalEmailHandler)
+		app.POST("/administrative/helpemail", ExternalEmailHandler)
 
 		app.GET("/websocket/:id", WebSocketHandler)
 

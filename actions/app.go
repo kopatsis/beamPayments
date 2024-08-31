@@ -88,6 +88,8 @@ func App() *buffalo.App {
 
 		app.GET("/websocket/:id", WebSocketHandler)
 
+		app.POST("/logout", HandleUserLogout)
+
 		app.ServeFiles("/", http.FS(public.FS()))
 
 		defer badger.Close()

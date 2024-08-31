@@ -4,10 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Processing</title>
+    <script
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.0/dist/cdn.min.js"
+      defer
+    ></script>
   </head>
 
   <body>
     <div id="loader" style="display: none"></div>
+
+    <button @click="logoutButton">Close and Log Out</button>
 
     <div>
       <div>Email: <b> <%= Email %> </b></div>
@@ -49,6 +55,17 @@
           console.log("WebSocket closed:", event);
         };
       });
+
+      function logoutButton() {
+        fetch("/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).finally(() => {
+          window.close();
+        });
+      }
     </script>
   </body>
 </html>

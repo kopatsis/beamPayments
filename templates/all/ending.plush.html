@@ -13,6 +13,8 @@
 
     <div id="loader" style="display: none;"></div>
 
+    <button @click="logoutButton">Close and Log Out</button>
+
     <div>
         <div>
             Email: <b>
@@ -62,6 +64,17 @@
                 },
             };
         }
+
+        function logoutButton() {
+        fetch("/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).finally(() => {
+          window.close();
+        });
+      }
     </script>
 
 

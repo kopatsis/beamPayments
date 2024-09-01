@@ -78,9 +78,13 @@ func App() *buffalo.App {
 		app.POST("/multipass", multipass.Multipass)
 
 		app.POST("/webhook", HandleStripeWebhook)
+		app.POST("/webhook/equivalent/:id", HandleEquivalentWebhook)
 
 		app.POST("/administrative/logout", HandleLogAllOut)
 		app.POST("/administrative/delete", HandleDeleteAccount)
+		app.POST("/administrative/emailexchange", AddExchange)
+		app.GET("/administrative/emailexchange/:id", GetExchange)
+
 		app.POST("/check/:id", ExternalGetHandler)
 
 		app.POST("/helpemail", InternalEmailHandler)

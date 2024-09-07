@@ -2,7 +2,7 @@ package actions
 
 import (
 	"beam_payments/actions/firebaseApp"
-	"beam_payments/models/badger"
+	"beam_payments/redis"
 
 	"github.com/gobuffalo/buffalo"
 )
@@ -13,12 +13,12 @@ func HandleLogAllOut(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	modified, err := badger.AdminCookieModify(uid, false)
+	err = redis.AddResetDate(uid)
 	if err != nil {
 		return c.Error(400, err)
 	}
 
-	response := map[string]any{"modified": modified}
+	response := map[string]any{"success": true}
 	return c.Render(200, r.JSON(response))
 }
 
@@ -28,12 +28,12 @@ func HandleDeleteAccount(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	modified, err := badger.AdminCookieModify(uid, true)
+	err = redis.AddBanned(uid)
 	if err != nil {
 		return c.Error(400, err)
 	}
 
-	response := map[string]any{"modified": modified}
+	response := map[string]any{"success": true}
 	return c.Render(200, r.JSON(response))
 }
 

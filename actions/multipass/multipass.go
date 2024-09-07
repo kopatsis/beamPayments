@@ -2,7 +2,7 @@ package multipass
 
 import (
 	"beam_payments/actions/firebaseApp"
-	"beam_payments/models/badger"
+	"beam_payments/redis"
 	"net/http"
 	"os"
 	"time"
@@ -22,17 +22,16 @@ func Multipass(c buffalo.Context) error {
 		return c.Redirect(http.StatusSeeOther, originalURL+"/login?circleRedir=t")
 	}
 
-	passcode, banned, err := badger.CreateCookie(uid)
+	ban, _, err := redis.CheckCookeLimit(uid, time.Now())
 	if err != nil {
 		return c.Redirect(http.StatusSeeOther, "/loginerror")
 	}
 
-	if banned {
+	if ban {
 		return c.Redirect(http.StatusSeeOther, "/loginerror")
 	}
 
 	c.Session().Set("user_id", uid)
-	c.Session().Set("passcode", passcode)
 	c.Session().Set("date", time.Now().Format(time.RFC3339))
 
 	if err := c.Session().Save(); err != nil {

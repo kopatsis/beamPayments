@@ -10,7 +10,6 @@ import (
 	"beam_payments/actions/multipass"
 	"beam_payments/locales"
 	"beam_payments/middleware"
-	"beam_payments/models/badger"
 	"beam_payments/public"
 
 	"github.com/gobuffalo/buffalo"
@@ -96,7 +95,6 @@ func App() *buffalo.App {
 
 		app.ServeFiles("/", http.FS(public.FS()))
 
-		defer badger.Close()
 	})
 
 	return app

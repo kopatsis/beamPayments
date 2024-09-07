@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"beam_payments/models/badger"
+	"beam_payments/redis"
 	"net/http"
 	"time"
 
@@ -30,7 +30,8 @@ func WebSocketHandler(c buffalo.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			if badger.GetQueue(id) {
+			ex, err := redis.GetQueue(id)
+			if err == nil && ex {
 				conn.WriteMessage(websocket.TextMessage, []byte("refresh"))
 				return nil
 			}

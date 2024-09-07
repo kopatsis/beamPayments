@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"beam_payments/models/badger"
+	"beam_payments/redis"
 	"errors"
 	"net/http"
 	"os"
@@ -38,10 +38,9 @@ func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 		}
 
 		userID := c.Session().Get("user_id").(string)
-		passcodeStr := c.Session().Get("passcode").(string)
 		dateStr := c.Session().Get("date").(string)
 
-		if userID == "" || passcodeStr == "" || dateStr == "" {
+		if userID == "" || dateStr == "" {
 			return errorSplit(c, errors.New("unauthorized: missing session data"), false)
 		}
 
@@ -50,13 +49,16 @@ func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 			return errorSplit(c, errors.New("unauthorized: missing session data"), false)
 		}
 
-		authorized, banned := badger.CheckCookie(userID, passcodeStr, date)
+		ban, reset, err := redis.CheckCookeLimit(userID, date)
+		if err != nil {
+			return errorSplit(c, errors.New("unauthorized: failure with redis"), false)
+		}
 
-		if !authorized {
+		if reset {
 			return errorSplit(c, errors.New("unauthorized: not logged in"), false)
 		}
 
-		if banned {
+		if ban {
 			c.Session().Clear()
 			c.Session().Save()
 			return errorSplit(c, errors.New("unauthorized: user does not exist"), true)

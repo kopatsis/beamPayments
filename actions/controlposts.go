@@ -4,7 +4,7 @@ import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/sendgrid"
 	"beam_payments/models"
-	"beam_payments/models/badger"
+	"beam_payments/redis"
 	"context"
 	"errors"
 	"os"
@@ -89,6 +89,10 @@ func PostPayHandler(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
+	if err := redis.AddQueue(newSub.ID); err != nil {
+		return c.Error(400, err)
+	}
+
 	if err := models.CreateSubscription(userid, newSub.ID, time.Unix(newSub.CurrentPeriodEnd, 0)); err != nil {
 		return c.Error(400, err)
 	}
@@ -101,7 +105,8 @@ func PostPayHandler(c buffalo.Context) error {
 	timeout := 8 * time.Second
 
 	for t := range ticker.C {
-		if badger.GetQueue(newSub.ID) {
+		ex, err := redis.GetQueue(newSub.ID)
+		if err == nil && !ex {
 			return c.Render(200, r.JSON(response))
 		}
 

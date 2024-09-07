@@ -4,7 +4,7 @@ import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/sendgrid"
 	"beam_payments/models"
-	"beam_payments/models/badger"
+	"beam_payments/redis"
 	"context"
 	"errors"
 	"time"
@@ -32,9 +32,9 @@ func HandleEquivalentWebhook(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	isFirst := !badger.GetQueue(subscription.ID)
+	isFirst, _ := redis.GetQueue(subscription.ID)
 
-	if err := badger.SetQueue(subscription.ID); err != nil {
+	if err := redis.DeleteQueue(subscription.ID); err != nil {
 		return c.Error(400, err)
 	}
 

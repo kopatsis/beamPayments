@@ -3,6 +3,7 @@ package middleware
 import (
 	"beam_payments/models/badger"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -30,6 +31,8 @@ func errorSplit(c buffalo.Context, err error, banned bool) error {
 
 func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
+
+		fmt.Println("faggot")
 
 		path := c.Request().URL.Path
 

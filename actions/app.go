@@ -58,6 +58,8 @@ func App() *buffalo.App {
 
 		app.Use(middleware.CookieMiddleware)
 
+		app.Use(middleware.CORSMiddleware)
+
 		cron.ScheduledTasks()
 
 		// Wraps each request in a transaction.
@@ -66,6 +68,8 @@ func App() *buffalo.App {
 		// app.Use(popmw.Transaction(models.DB))
 		// Setup and use translations:
 		app.Use(translations())
+
+		app.OPTIONS("/{path:.+}", nil)
 
 		app.GET("/", GetHandler)
 		app.GET("/loginerror", LoginErrorHandler)
@@ -78,19 +82,20 @@ func App() *buffalo.App {
 		app.POST("/multipass", multipass.Multipass)
 
 		app.POST("/webhook", HandleStripeWebhook)
-		app.POST("/webhook/equivalent/:id", HandleEquivalentWebhook)
+		app.POST("/webhook/equivalent/{id}", HandleEquivalentWebhook)
 
 		app.POST("/administrative/logout", HandleLogAllOut)
 		app.POST("/administrative/delete", HandleDeleteAccount)
 		app.POST("/administrative/emailexchange", AddExchange)
-		app.GET("/administrative/emailexchange/:id", GetExchange)
+		app.GET("/administrative/emailexchange/{id}", GetExchange)
 
-		app.POST("/check/:id", ExternalGetHandler)
+		app.GET("/check/{id}", ExternalGetHandler)
+		app.GET("/check", worthless)
 
 		app.POST("/helpemail", InternalEmailHandler)
 		app.POST("/administrative/helpemail", ExternalEmailHandler)
 
-		app.GET("/websocket/:id", WebSocketHandler)
+		app.GET("/websocket/{id}", WebSocketHandler)
 
 		app.POST("/logout", HandleUserLogout)
 
@@ -119,4 +124,8 @@ func forceSSL() buffalo.MiddlewareFunc {
 		SSLRedirect:     ENV == "production",
 		SSLProxyHeaders: map[string]string{"X-Forwarded-Proto": "https"},
 	})
+}
+
+func worthless(c buffalo.Context) error {
+	return c.Render(200, r.JSON(map[string]any{"kill": "yourself"}))
 }

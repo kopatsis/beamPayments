@@ -27,12 +27,12 @@ func ExternalGetHandler(c buffalo.Context) error {
 		return c.Error(400, errors.New("no param provided"))
 	}
 
-	sub, exists, err := models.GetSubscription(id)
+	sub, blank, err := models.GetSubscription(id)
 	if err != nil {
 		return c.Error(400, err)
 	}
 
-	if !exists {
+	if blank {
 		return c.Render(200, r.JSON(map[string]any{"id": "", "paying": false}))
 	}
 

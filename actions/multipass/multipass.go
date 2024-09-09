@@ -2,6 +2,7 @@ package multipass
 
 import (
 	"beam_payments/actions/firebaseApp"
+	"beam_payments/middleware"
 	"beam_payments/redis"
 	"net/http"
 	"os"
@@ -31,12 +32,7 @@ func Multipass(c buffalo.Context) error {
 		return c.Redirect(http.StatusSeeOther, "/loginerror")
 	}
 
-	c.Session().Set("user_id", uid)
-	c.Session().Set("date", time.Now().Format(time.RFC3339))
-
-	if err := c.Session().Save(); err != nil {
-		return c.Redirect(http.StatusSeeOther, "/loginerror")
-	}
+	middleware.CreateCookie(c, uid)
 
 	return c.Redirect(http.StatusSeeOther, "/")
 

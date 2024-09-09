@@ -2,6 +2,7 @@ package actions
 
 import (
 	"beam_payments/actions/firebaseApp"
+	"beam_payments/middleware"
 	"beam_payments/redis"
 
 	"github.com/gobuffalo/buffalo"
@@ -38,13 +39,8 @@ func HandleDeleteAccount(c buffalo.Context) error {
 }
 
 func HandleUserLogout(c buffalo.Context) error {
-	c.Session().Clear()
-	err := c.Session().Save()
+	middleware.RemoveCookie(c)
 
 	response := map[string]any{"loggedout": true}
-	if err != nil {
-		response = map[string]any{"loggedout": false, "error": err.Error()}
-	}
-
 	return c.Render(200, r.JSON(response))
 }

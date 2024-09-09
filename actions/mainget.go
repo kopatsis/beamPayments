@@ -3,6 +3,7 @@ package actions
 import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/stripefunc"
+	"beam_payments/middleware"
 	"beam_payments/models"
 	"context"
 	"net/http"
@@ -15,9 +16,10 @@ import (
 )
 
 func GetHandler(c buffalo.Context) error {
-	userID := c.Session().Get("user_id").(string)
-	if userID == "" {
-		c.Set("Error", "No user id in cookie available")
+
+	userID, err := middleware.GetCookieUserID(c)
+	if err != nil {
+		c.Set("Error", "No user id in cookie available: "+err.Error())
 		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 	}
 

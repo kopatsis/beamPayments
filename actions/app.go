@@ -18,7 +18,6 @@ import (
 	"github.com/gobuffalo/middleware/forcessl"
 	"github.com/gobuffalo/middleware/i18n"
 	"github.com/gobuffalo/middleware/paramlogger"
-	"github.com/gorilla/sessions"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/account"
 	"github.com/unrolled/secure"
@@ -44,9 +43,7 @@ func App() *buffalo.App {
 		log.Printf("Stripe API key test succeeded: Account ID = %s, Email = %s", acct.ID, acct.Email)
 
 		app = buffalo.New(buffalo.Options{
-			Env:          ENV,
-			SessionName:  "_beam_payments_session",
-			SessionStore: sessions.NewCookieStore([]byte("secret-key")),
+			Env: ENV,
 		})
 
 		app.Use(forceSSL())

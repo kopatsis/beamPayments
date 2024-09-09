@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gobuffalo/buffalo"
 )
@@ -37,16 +36,9 @@ func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 			return next(c)
 		}
 
-		userID := c.Session().Get("user_id").(string)
-		dateStr := c.Session().Get("date").(string)
-
-		if userID == "" || dateStr == "" {
-			return errorSplit(c, errors.New("unauthorized: missing session data"), false)
-		}
-
-		date, err := time.Parse(time.RFC3339, dateStr)
+		userID, date, err := GetCookie(c)
 		if err != nil {
-			return errorSplit(c, errors.New("unauthorized: missing session data"), false)
+			return errorSplit(c, errors.New("unauthorized: missing cookie data"), false)
 		}
 
 		ban, reset, err := redis.CheckCookeLimit(userID, date)
@@ -59,8 +51,7 @@ func CookieMiddleware(next buffalo.Handler) buffalo.Handler {
 		}
 
 		if ban {
-			c.Session().Clear()
-			c.Session().Save()
+			RemoveCookie(c)
 			return errorSplit(c, errors.New("unauthorized: user does not exist"), true)
 		}
 

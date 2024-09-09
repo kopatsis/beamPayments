@@ -3,6 +3,7 @@ package actions
 import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/sendgrid"
+	"beam_payments/middleware"
 	"beam_payments/models"
 	"beam_payments/redis"
 	"context"
@@ -30,9 +31,9 @@ func PostPayHandler(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	userid := c.Session().Get("user_id").(string)
-	if userid == "" {
-		return c.Error(400, errors.New("no user in "))
+	userid, err := middleware.GetCookieUserID(c)
+	if err != nil {
+		return c.Error(400, errors.New("no user in :"+err.Error()))
 	}
 
 	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)
@@ -118,9 +119,9 @@ func PostPayHandler(c buffalo.Context) error {
 }
 
 func PostCancelHandler(c buffalo.Context) error {
-	userid := c.Session().Get("user_id").(string)
-	if userid == "" {
-		return c.Error(400, errors.New("no user in "))
+	userid, err := middleware.GetCookieUserID(c)
+	if err != nil {
+		return c.Error(400, errors.New("no user in :"+err.Error()))
 	}
 
 	dbsub, exists, err := models.GetSubscription(userid)
@@ -158,9 +159,9 @@ func PostCancelHandler(c buffalo.Context) error {
 }
 
 func PostUncancelHandler(c buffalo.Context) error {
-	userid := c.Session().Get("user_id").(string)
-	if userid == "" {
-		return c.Error(400, errors.New("no user in "))
+	userid, err := middleware.GetCookieUserID(c)
+	if err != nil {
+		return c.Error(400, errors.New("no user in :"+err.Error()))
 	}
 
 	dbsub, exists, err := models.GetSubscription(userid)
@@ -203,9 +204,9 @@ func PostUpdatePayment(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	userid := c.Session().Get("user_id").(string)
-	if userid == "" {
-		return c.Error(400, errors.New("no user in "))
+	userid, err := middleware.GetCookieUserID(c)
+	if err != nil {
+		return c.Error(400, errors.New("no user in :"+err.Error()))
 	}
 
 	firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)

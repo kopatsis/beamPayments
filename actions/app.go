@@ -78,8 +78,6 @@ func App() *buffalo.App {
 
 		app.POST("/administrative/logout", HandleLogAllOut)
 		app.POST("/administrative/delete", HandleDeleteAccount)
-		app.POST("/administrative/emailexchange", AddExchange)
-		app.GET("/administrative/emailexchange/:id", GetExchange)
 
 		app.POST("/check/:id", ExternalGetHandler)
 

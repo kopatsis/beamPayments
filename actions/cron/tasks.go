@@ -9,6 +9,6 @@ import (
 
 func ScheduledTasks() {
 	s := gocron.NewScheduler(time.UTC)
-	s.Every(3).Hours().Do(models.ScheduledSubscriptionMods)
+	s.Every(1).Hours().Do(models.ScheduledSubscriptionMods)
 	s.StartAsync()
 }

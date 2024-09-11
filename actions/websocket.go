@@ -1,8 +1,11 @@
 package actions
 
 import (
+	"beam_payments/models"
 	"beam_payments/redis"
+	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
@@ -16,6 +19,8 @@ var upgrader = websocket.Upgrader{
 }
 
 func WebSocketHandler(c buffalo.Context) error {
+	start := time.Now()
+
 	id := c.Param("id")
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
@@ -23,20 +28,35 @@ func WebSocketHandler(c buffalo.Context) error {
 	}
 	defer conn.Close()
 
-	timeout := time.After(90 * time.Second)
-	ticker := time.NewTicker(3 * time.Second)
+	pubsub := redis.RDB.Subscribe(context.Background(), "Subscription")
+	defer pubsub.Close()
+
+	timeoutDuration := 180 * time.Second
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
+		case msg := <-pubsub.Channel():
+			parts := strings.Split(msg.Payload, " --- ")
+			if len(parts) == 2 {
+				subscriptionID, status := parts[0], parts[1]
+				if subscriptionID == id && status == "Success" {
+					conn.WriteMessage(websocket.TextMessage, []byte("refresh"))
+					return nil
+				} else if subscriptionID == id && status == "Fail" {
+					conn.WriteMessage(websocket.TextMessage, []byte("error"))
+					return nil
+				}
+			}
 		case <-ticker.C:
-			ex, err := redis.GetQueue(id)
-			if err == nil && ex {
+			sub, none, err := models.GetSubscriptionBySubID(id)
+			if none || err != nil || !sub.Processing {
 				conn.WriteMessage(websocket.TextMessage, []byte("refresh"))
 				return nil
 			}
-		case <-timeout:
-			conn.WriteMessage(websocket.TextMessage, []byte("error"))
+		case <-time.After(timeoutDuration - time.Since(start)):
+			conn.WriteMessage(websocket.TextMessage, []byte("timeout"))
 			return nil
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
@@ -100,22 +101,25 @@ func PostPayHandler(c buffalo.Context) error {
 
 	response := map[string]any{"success": true}
 
-	ticker := time.NewTicker(333 * time.Millisecond)
-	defer ticker.Stop()
+	pubsub := redis.RDB.Subscribe(context.Background(), "Subscription")
+	defer pubsub.Close()
 
-	timeout := 8 * time.Second
+	timeoutDuration := 10 * time.Second
 
-	for t := range ticker.C {
-		ex, err := redis.GetQueue(newSub.ID)
-		if err == nil && !ex {
-			return c.Render(200, r.JSON(response))
-		}
-
-		if t.Sub(start) >= timeout {
-			break
+	for {
+		select {
+		case msg := <-pubsub.Channel():
+			parts := strings.Split(msg.Payload, " --- ")
+			if len(parts) == 2 {
+				subscriptionID, status := parts[0], parts[1]
+				if subscriptionID == newSub.ID && status == "Success" {
+					return c.Render(200, r.JSON(response))
+				}
+			}
+		case <-time.After(timeoutDuration - time.Since(start)):
+			return c.Render(200, r.JSON(map[string]string{"error": "Timeout"}))
 		}
 	}
-	return c.Render(200, r.JSON(response))
 }
 
 func PostCancelHandler(c buffalo.Context) error {

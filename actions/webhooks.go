@@ -60,13 +60,20 @@ func HandleStripeWebhook(c buffalo.Context) error {
 			return c.Error(400, err)
 		}
 
-		isFirst, _ := redis.GetQueue(subscription.ID)
+		exists, _ := redis.GetSub(userid)
+		if !exists {
+			err := redis.AddSub(userid)
+			if err != nil {
+				return c.Error(400, err)
+			}
 
-		if err := redis.DeleteQueue(subscription.ID); err != nil {
-			return c.Error(400, err)
+			err = redis.RDB.Publish(context.Background(), "Subscriptions", subscription.ID+" --- "+"Success").Err()
+			if err != nil {
+				return c.Error(400, err)
+			}
 		}
 
-		if err := sendgrid.SendSuccessEmail(firebaseUser.Email, isFirst); err != nil {
+		if err := sendgrid.SendSuccessEmail(firebaseUser.Email, !exists); err != nil {
 			return c.Error(400, errors.New("didn't send email but everything else worked: "+err.Error()))
 		}
 
@@ -90,6 +97,14 @@ func HandleStripeWebhook(c buffalo.Context) error {
 			return c.Error(400, err)
 		} else if notInDB {
 			return c.Error(400, errors.New("failed payment for an inexistent sub: "+subscription.ID))
+		}
+
+		exists, _ := redis.GetSub(subscript.UserID)
+		if !exists {
+			err = redis.RDB.Publish(context.Background(), "Subscriptions", subscription.ID+" --- "+"Fail").Err()
+			if err != nil {
+				return c.Error(400, err)
+			}
 		}
 
 		firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), subscript.UserID)

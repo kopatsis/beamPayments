@@ -1,8 +1,9 @@
 package models
 
 import (
+	"beam_payments/actions/sendgrid"
+	"beam_payments/redis"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 )
@@ -86,11 +87,10 @@ func ConfirmSubscription(subscriptionID string, newExpiresDate time.Time) (strin
 	return sub.UserID, nil
 }
 
-func scheduledUpdate() {
-	now := time.Now()
-	endDateThreshold := now.Add(-24 * time.Hour).Format("2006-01-02 15:04:05")
-	expiresDateThreshold := now.Add(-72 * time.Hour).Format("2006-01-02 15:04:05")
-	archivedDate := now.Format("2006-01-02 15:04:05")
+func scheduledUpdate(refTime time.Time) error {
+	endDateThreshold := refTime.Add(-24 * time.Hour).Format("2006-01-02 15:04:05")
+	expiresDateThreshold := refTime.Add(-72 * time.Hour).Format("2006-01-02 15:04:05")
+	archivedDate := time.Now().Format("2006-01-02 15:04:05")
 
 	query := `
 		UPDATE subscriptions 
@@ -99,10 +99,64 @@ func scheduledUpdate() {
 	`
 
 	if err := DB.RawQuery(query, archivedDate, endDateThreshold, expiresDateThreshold).Exec(); err != nil {
-		log.Println("Error during scheduled update:", err)
+		return err
 	}
+
+	return nil
+}
+
+func scheduledGetUserIDs() (userIDs []string, now time.Time, err error) {
+	now = time.Now()
+	endDateThreshold := now.Add(-24 * time.Hour)
+	expiresDateThreshold := now.Add(-72 * time.Hour)
+
+	type UserIDOnly struct {
+		UserID string `db:"user_id"`
+	}
+
+	var results []UserIDOnly
+
+	err = DB.RawQuery(`
+		SELECT user_id 
+		FROM subscriptions 
+		WHERE end_date <= ? OR expires_date <= ?
+	`, endDateThreshold, expiresDateThreshold).All(&results)
+
+	if err != nil {
+		return nil, now, err
+	}
+
+	for _, result := range results {
+		userIDs = append(userIDs, ":u:"+result.UserID)
+	}
+
+	return userIDs, now, nil
 }
 
 func ScheduledSubscriptionMods() {
-	scheduledUpdate()
+	ids, ref, err := scheduledGetUserIDs()
+	if err != nil {
+		err = sendgrid.SendSeriousErrorAlert("Scheduled Upating Get IDs", "This error: "+err.Error())
+		if err != nil {
+			sendgrid.SendSeriousErrorAlert("Sending the Actual Issue Email", "This error: "+err.Error())
+		}
+	}
+	if len(ids) > 0 {
+		err := scheduledUpdate(ref)
+		if err != nil {
+			err = sendgrid.SendSeriousErrorAlert("Scheduled Upating IDs", "This error: "+err.Error())
+			if err != nil {
+				sendgrid.SendSeriousErrorAlert("Sending the Actual Issue Email", "This error: "+err.Error())
+			}
+		}
+
+		err = redis.DeleteSubMass(ids)
+		if err != nil {
+			err = sendgrid.SendSeriousErrorAlert("Scheduled Upating Users on Redis", "This error: "+err.Error())
+			if err != nil {
+				sendgrid.SendSeriousErrorAlert("Sending the Actual Issue Email", "This error: "+err.Error())
+			}
+		}
+	}
+
 }

@@ -174,3 +174,24 @@ func SendPaymentUpdateEmail(userEmail string) error {
 
 	return nil
 }
+
+func SendSeriousErrorAlert(iss, body string) error {
+	from := mail.NewEmail("No Reply", "donotreply@shortentrack.com")
+	to := mail.NewEmail("Admin", "admin@shortentrack.com")
+	subject := "ALERT ISSUE WITHIN APPLICATION: " + iss
+
+	content := mail.NewContent("text/plain", body)
+
+	message := mail.NewV3MailInit(from, subject, to, content)
+
+	response, err := SGClient.Send(message)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode >= 400 {
+		return fmt.Errorf("failed to send email: %s", response.Body)
+	}
+
+	return nil
+}

@@ -87,6 +87,7 @@ func App() *buffalo.App {
 
 		app.POST("/helpemail", InternalEmailHandler)
 		app.POST("/administrative/helpemail", ExternalEmailHandler)
+		app.POST("/administrative/internalemail", HandleInternalAlertEmail)
 
 		app.GET("/websocket/{id}", WebSocketHandler)
 

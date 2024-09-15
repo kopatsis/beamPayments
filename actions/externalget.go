@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"beam_payments/models"
 	"beam_payments/redis"
 	"errors"
 	"os"
@@ -28,20 +27,9 @@ func ExternalGetHandler(c buffalo.Context) error {
 		return c.Error(400, errors.New("no param provided"))
 	}
 
-	paying, err := redis.GetSub(id)
-	if err != nil {
-		sub, blank, err := models.GetSubscription(id)
-		if err != nil {
-			return c.Error(400, err)
-		}
-
-		if blank {
-			return c.Render(200, r.JSON(map[string]any{"id": "", "paying": false}))
-		}
-
-		if !sub.Paying {
-			return c.Render(200, r.JSON(map[string]any{"id": sub.SubscriptionID, "paying": false}))
-		}
+	paying, err := redis.CheckUserPaying(id)
+	if err != nil && !paying {
+		return c.Error(400, errors.New("unable to query payment status"))
 	}
 
 	return c.Render(200, r.JSON(map[string]any{"paying": paying}))

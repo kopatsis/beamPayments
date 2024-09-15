@@ -4,7 +4,6 @@ import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/sendgrid"
 	"beam_payments/middleware"
-	"beam_payments/models"
 	"beam_payments/redis"
 	"context"
 	"errors"
@@ -95,10 +94,6 @@ func PostPayHandler(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	if err := models.CreateSubscription(userid, newSub.ID, time.Unix(newSub.CurrentPeriodEnd, 0)); err != nil {
-		return c.Error(400, err)
-	}
-
 	response := map[string]any{"success": true}
 
 	pubsub := redis.RDB.Subscribe(context.Background(), "Subscription")
@@ -128,14 +123,14 @@ func PostCancelHandler(c buffalo.Context) error {
 		return c.Error(400, errors.New("no user in :"+err.Error()))
 	}
 
-	dbsub, exists, err := models.GetSubscription(userid)
+	userPayment, err := redis.GetUserPayment(userid)
 	if err != nil {
 		return c.Error(400, err)
-	} else if !exists {
+	} else if userPayment == nil {
 		return c.Error(400, errors.New("no unarchived (active) subscriptions for user"))
 	}
 
-	stripeSub, err := sub.Get(dbsub.SubscriptionID, nil)
+	stripeSub, err := sub.Get(userPayment.SubscriptionID, nil)
 	if err != nil {
 		return c.Error(400, err)
 	}
@@ -145,10 +140,6 @@ func PostCancelHandler(c buffalo.Context) error {
 	}
 
 	if _, err := sub.Update(stripeSub.ID, params); err != nil {
-		return c.Error(400, err)
-	}
-
-	if err := models.CancelSubscription(dbsub.ID, time.Unix(stripeSub.CurrentPeriodEnd, 0)); err != nil {
 		return c.Error(400, err)
 	}
 
@@ -168,14 +159,14 @@ func PostUncancelHandler(c buffalo.Context) error {
 		return c.Error(400, errors.New("no user in :"+err.Error()))
 	}
 
-	dbsub, exists, err := models.GetSubscription(userid)
+	userPayment, err := redis.GetUserPayment(userid)
 	if err != nil {
 		return c.Error(400, err)
-	} else if !exists {
+	} else if userPayment == nil {
 		return c.Error(400, errors.New("no unarchived (active) subscriptions for user"))
 	}
 
-	stripeSub, err := sub.Get(dbsub.SubscriptionID, nil)
+	stripeSub, err := sub.Get(userPayment.SubscriptionID, nil)
 	if err != nil {
 		return c.Error(400, err)
 	}
@@ -185,10 +176,6 @@ func PostUncancelHandler(c buffalo.Context) error {
 	}
 
 	if _, err := sub.Update(stripeSub.ID, params); err != nil {
-		return c.Error(400, err)
-	}
-
-	if err := models.UncancelSubscription(dbsub.ID); err != nil {
 		return c.Error(400, err)
 	}
 
@@ -218,14 +205,14 @@ func PostUpdatePayment(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	dbsub, exists, err := models.GetSubscription(userid)
+	userPayment, err := redis.GetUserPayment(userid)
 	if err != nil {
 		return c.Error(400, err)
-	} else if !exists {
+	} else if userPayment == nil {
 		return c.Error(400, errors.New("no unarchived (active) subscriptions for user"))
 	}
 
-	s, err := sub.Get(dbsub.SubscriptionID, nil)
+	s, err := sub.Get(userPayment.SubscriptionID, nil)
 	if err != nil {
 		return c.Error(400, err)
 	}

@@ -4,7 +4,7 @@ import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/stripefunc"
 	"beam_payments/middleware"
-	"beam_payments/models"
+	"beam_payments/redis"
 	"context"
 	"net/http"
 	"time"
@@ -33,14 +33,14 @@ func GetHandler(c buffalo.Context) error {
 		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 	}
 
-	dbsub, exists, err := models.GetSubscription(userID)
+	c.Set("Email", firebaseUser.Email)
+	userPayment, err := redis.GetUserPayment(userID)
 	if err != nil {
 		c.Set("Error", err.Error())
 		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 	}
-	c.Set("Email", firebaseUser.Email)
 
-	if !exists || dbsub == nil {
+	if userPayment == nil {
 		params := &stripe.SetupIntentParams{
 			PaymentMethodTypes: stripe.StringSlice([]string{
 				"card",
@@ -54,56 +54,51 @@ func GetHandler(c buffalo.Context) error {
 		c.Set("Secret", si.ClientSecret)
 
 		return c.Render(http.StatusOK, r.HTML("all/pay.plush.html"))
-	} else {
-
-		s, err := sub.Get(dbsub.SubscriptionID, nil)
-		if err != nil {
-			c.Set("Error", err.Error())
-			return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
-		}
-
-		if dbsub.Processing {
-			c.Set("ID", s.ID)
-			return c.Render(http.StatusOK, r.HTML("all/processing.plush.html"))
-		}
-
-		if dbsub.Ending || s.CancelAtPeriodEnd {
-			// c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
-			c.Set("EndDate", dbsub.EndDate)
-			return c.Render(http.StatusOK, r.HTML("all/ending.plush.html"))
-		}
-
-		paymentType, cardBrand, lastFour, expMonth, expYear, err := stripefunc.GetPaymentMethodDetails(s.ID)
-		if err != nil {
-			c.Set("Error", err.Error())
-			return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
-		}
-
-		params := &stripe.SetupIntentParams{
-			PaymentMethodTypes: stripe.StringSlice([]string{
-				"card",
-			}),
-		}
-		si, err := setupintent.New(params)
-		if err != nil {
-			c.Set("Error", err.Error())
-			return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
-		}
-
-		expiring := false
-		if dbsub.ExpiresDate.Before(time.Now()) {
-			expiring = true
-		}
-
-		c.Set("PaymentType", paymentType)
-		c.Set("CardBrand", cardBrand)
-		c.Set("LastFour", lastFour)
-		c.Set("Expiring", expiring)
-		c.Set("ExpMonth", expMonth)
-		c.Set("ExpYear", expYear)
-		c.Set("Secret", si.ClientSecret)
-		// c.Set("RendDate", time.Unix(s.CurrentPeriodEnd, 0))
-		c.Set("EndDate", dbsub.ExpiresDate)
-		return c.Render(http.StatusOK, r.HTML("all/admin.plush.html"))
 	}
+
+	s, err := sub.Get(userPayment.SubscriptionID, nil)
+	if err != nil {
+		c.Set("Error", err.Error())
+		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
+	}
+
+	switch s.Status {
+	case "incomplete":
+		c.Set("ID", s.ID)
+		return c.Render(http.StatusOK, r.HTML("all/processing.plush.html"))
+	case "past_due":
+		c.Set("ID", s.ID)
+		return c.Render(http.StatusOK, r.HTML("all/updatepay.plush.html"))
+	}
+
+	if s.CancelAtPeriodEnd {
+		c.Set("EndDate", time.Unix(s.CurrentPeriodEnd, 0))
+		return c.Render(http.StatusOK, r.HTML("all/ending.plush.html"))
+	}
+
+	params := &stripe.SetupIntentParams{
+		PaymentMethodTypes: stripe.StringSlice([]string{
+			"card",
+		}),
+	}
+	si, err := setupintent.New(params)
+	if err != nil {
+		c.Set("Error", err.Error())
+		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
+	}
+
+	paymentType, cardBrand, lastFour, expMonth, expYear, err := stripefunc.GetPaymentMethodDetails(s.ID)
+	if err != nil {
+		c.Set("Error", err.Error())
+		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
+	}
+
+	c.Set("PaymentType", paymentType)
+	c.Set("CardBrand", cardBrand)
+	c.Set("LastFour", lastFour)
+	c.Set("ExpMonth", expMonth)
+	c.Set("ExpYear", expYear)
+	c.Set("Secret", si.ClientSecret)
+	c.Set("EndDate", time.Unix(s.CurrentPeriodEnd, 0))
+	return c.Render(http.StatusOK, r.HTML("all/admin.plush.html"))
 }

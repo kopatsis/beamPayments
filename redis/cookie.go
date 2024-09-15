@@ -10,9 +10,9 @@ import (
 )
 
 type CookieLimit struct {
-	Success   bool
-	Banned    bool
-	ResetDate time.Time
+	Success   bool      `json:"s"`
+	Banned    bool      `json:"b"`
+	ResetDate time.Time `json:"r"`
 }
 
 func getCookieLimit(uid string) (CookieLimit, error) {

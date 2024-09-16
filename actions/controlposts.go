@@ -46,13 +46,28 @@ func PostPayHandler(c buffalo.Context) error {
 	customerParams := &stripe.CustomerParams{
 		Email: stripe.String(email),
 	}
-	customerParams.Metadata = map[string]string{
-		"userId": userid,
-	}
 
-	stripeCustomer, err := customer.New(customerParams)
+	userPayment, err := redis.GetUserPayment(userid)
 	if err != nil {
 		return c.Error(400, err)
+	}
+
+	var stripeCustomer *stripe.Customer
+
+	oldCust := userPayment != nil && userPayment.CustomerID != ""
+
+	if oldCust {
+		stripeCustomer, err = customer.Get(userPayment.CustomerID, nil)
+		if err != nil {
+			oldCust = false
+		}
+	}
+
+	if !oldCust {
+		stripeCustomer, err = customer.New(customerParams)
+		if err != nil {
+			return c.Error(400, err)
+		}
 	}
 
 	attachParams := &stripe.PaymentMethodAttachParams{
@@ -83,7 +98,6 @@ func PostPayHandler(c buffalo.Context) error {
 			},
 		},
 	}
-	subscriptionParams.AddMetadata("userId", userid)
 
 	newSub, err := sub.New(subscriptionParams)
 	if err != nil {

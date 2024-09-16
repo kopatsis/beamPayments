@@ -62,11 +62,11 @@ func GetHandler(c buffalo.Context) error {
 		return c.Render(http.StatusOK, r.HTML("error/error.plush.html"))
 	}
 
-	switch s.Status {
-	case stripe.SubscriptionStatusIncomplete:
+	switch string(s.Status) {
+	case "incomplete":
 		c.Set("ID", s.ID)
 		return c.Render(http.StatusOK, r.HTML("all/processing.plush.html"))
-	case stripe.SubscriptionStatusPastDue:
+	case "past_due":
 		c.Set("ID", s.ID)
 		return c.Render(http.StatusOK, r.HTML("all/updatepay.plush.html"))
 	}

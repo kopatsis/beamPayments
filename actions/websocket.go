@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"beam_payments/models"
 	"beam_payments/redis"
 	"context"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gorilla/websocket"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/sub"
 )
 
 var upgrader = websocket.Upgrader{
@@ -32,7 +33,7 @@ func WebSocketHandler(c buffalo.Context) error {
 	defer pubsub.Close()
 
 	timeoutDuration := 180 * time.Second
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(9 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -42,18 +43,15 @@ func WebSocketHandler(c buffalo.Context) error {
 			if len(parts) == 2 {
 				subscriptionID, status := parts[0], parts[1]
 				if subscriptionID == id && status == "Success" {
-					conn.WriteMessage(websocket.TextMessage, []byte("refresh"))
-					return nil
+					return conn.WriteMessage(websocket.TextMessage, []byte("refresh"))
 				} else if subscriptionID == id && status == "Fail" {
-					conn.WriteMessage(websocket.TextMessage, []byte("error"))
-					return nil
+					return conn.WriteMessage(websocket.TextMessage, []byte("error"))
 				}
 			}
 		case <-ticker.C:
-			sub, none, err := models.GetSubscriptionBySubID(id)
-			if none || err != nil || !sub.Processing {
-				conn.WriteMessage(websocket.TextMessage, []byte("refresh"))
-				return nil
+			s, err := sub.Get(id, nil)
+			if err == nil && (s.Status == stripe.SubscriptionStatusActive || s.Status == stripe.SubscriptionStatusPastDue) {
+				return conn.WriteMessage(websocket.TextMessage, []byte("refresh"))
 			}
 		case <-time.After(timeoutDuration - time.Since(start)):
 			conn.WriteMessage(websocket.TextMessage, []byte("timeout"))

@@ -12,7 +12,6 @@ require (
 	github.com/gobuffalo/middleware v1.0.0
 	github.com/gobuffalo/pop/v6 v6.1.1
 	github.com/gobuffalo/suite/v4 v4.0.4
-	github.com/gobuffalo/validate/v3 v3.3.3
 	github.com/gorilla/websocket v1.5.3
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stripe/stripe-go/v72 v72.122.0
@@ -22,6 +21,7 @@ require (
 
 require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/gobuffalo/validate/v3 v3.3.3 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gorilla/sessions v1.2.1 // indirect
 )

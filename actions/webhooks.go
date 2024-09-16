@@ -3,7 +3,6 @@ package actions
 import (
 	"beam_payments/actions/firebaseApp"
 	"beam_payments/actions/sendgrid"
-	"beam_payments/models"
 	"beam_payments/redis"
 	"context"
 	"encoding/json"
@@ -50,7 +49,7 @@ func HandleStripeWebhook(c buffalo.Context) error {
 			return c.Error(400, err)
 		}
 
-		userid, err := models.ConfirmSubscription(subscription.ID, time.Unix(subscription.CurrentPeriodEnd, 0))
+		userid, err := redis.GetUserBySubID(subscription.ID)
 		if err != nil {
 			return c.Error(400, err)
 		}
@@ -60,20 +59,24 @@ func HandleStripeWebhook(c buffalo.Context) error {
 			return c.Error(400, err)
 		}
 
-		exists, _ := redis.GetSub(userid)
-		if !exists {
-			err := redis.AddSub(userid)
-			if err != nil {
-				return c.Error(400, err)
-			}
-
-			err = redis.RDB.Publish(context.Background(), "Subscriptions", subscription.ID+" --- "+"Success").Err()
-			if err != nil {
-				return c.Error(400, err)
-			}
+		userPayment, err := redis.GetUserPayment(userid)
+		if err != nil {
+			return c.Error(400, err)
+		} else if userPayment == nil {
+			return c.Error(400, errors.New("no user payment"))
 		}
 
-		if err := sendgrid.SendSuccessEmail(firebaseUser.Email, !exists); err != nil {
+		new := !userPayment.LastDate.IsZero()
+
+		if err := redis.SetUserPaymentActive(userid, subscription.ID, time.Unix(subscription.CurrentPeriodEnd, 0)); err != nil {
+			return c.Error(400, err)
+		}
+
+		if err := redis.RDB.Publish(context.Background(), "Subscriptions", subscription.ID+" --- "+"Success").Err(); err != nil {
+			return c.Error(400, err)
+		}
+
+		if err := sendgrid.SendSuccessEmail(firebaseUser.Email, new); err != nil {
 			return c.Error(400, errors.New("didn't send email but everything else worked: "+err.Error()))
 		}
 
@@ -92,23 +95,28 @@ func HandleStripeWebhook(c buffalo.Context) error {
 			return c.Error(400, err)
 		}
 
-		subscript, notInDB, err := models.GetSubscriptionBySubID(subscription.ID)
+		userid, err := redis.GetUserBySubID(subscription.ID)
 		if err != nil {
 			return c.Error(400, err)
-		} else if notInDB {
-			return c.Error(400, errors.New("failed payment for an inexistent sub: "+subscription.ID))
 		}
 
-		exists, _ := redis.GetSub(subscript.UserID)
-		if !exists {
-			err = redis.RDB.Publish(context.Background(), "Subscriptions", subscription.ID+" --- "+"Fail").Err()
-			if err != nil {
-				return c.Error(400, err)
-			}
-		}
-
-		firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), subscript.UserID)
+		firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)
 		if err != nil {
+			return c.Error(400, err)
+		}
+
+		userPayment, err := redis.GetUserPayment(userid)
+		if err != nil {
+			return c.Error(400, err)
+		} else if userPayment == nil {
+			return c.Error(400, errors.New("no user payment"))
+		}
+
+		if err := redis.SetUserPaymentInactive(userid, subscription.ID); err != nil {
+			return c.Error(400, err)
+		}
+
+		if err := redis.RDB.Publish(context.Background(), "Subscriptions", subscription.ID+" --- "+"Fail").Err(); err != nil {
 			return c.Error(400, err)
 		}
 
@@ -151,21 +159,24 @@ func HandleStripeWebhook(c buffalo.Context) error {
 
 		subscriptionID := invoiceObj.Subscription.ID
 
-		subscript, notInDB, err := models.GetSubscriptionBySubID(subscriptionID)
+		subscription, err := sub.Get(subscriptionID, nil)
 		if err != nil {
 			return c.Error(400, err)
-		} else if notInDB {
-			return c.Error(400, errors.New("chargeback for an inexistent sub: "+subscriptionID))
+		}
+
+		userid, err := redis.GetUserBySubID(subscription.ID)
+		if err != nil {
+			return c.Error(400, err)
 		}
 
 		email := "NO EMAIL FOR THIS ONE"
 
-		firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), subscript.UserID)
+		firebaseUser, err := firebaseApp.FirebaseAuth.GetUser(context.Background(), userid)
 		if err == nil && firebaseUser.Email != "" {
 			email = firebaseUser.Email
 		}
 
-		if err := sendgrid.SendChargeBackAlert(subscriptionID, subscript.UserID, email, subscript.Archived, subscript.ID); err != nil {
+		if err := sendgrid.SendChargeBackAlert(subscriptionID, userid, email, string(subscription.Status)); err != nil {
 			return c.Error(400, err)
 		}
 

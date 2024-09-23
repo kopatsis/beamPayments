@@ -43,8 +43,7 @@
 
         function submitForm(event) {
             event.preventDefault();
-            const formElement = document.getElementById('contactForm');
-            const formData = new FormData(formElement);
+            const formData = new FormData(event.target);
 
             fetch('/helpemail', {
                 method: 'POST',

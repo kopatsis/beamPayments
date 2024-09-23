@@ -1,12 +1,18 @@
 package actions
 
 import (
+	"beam_payments/actions/cloudflare"
 	"beam_payments/redis"
 	"errors"
 	"os"
 
 	"github.com/gobuffalo/buffalo"
 )
+
+type TurnstilePost struct {
+	Email   string `json:"email"`
+	Captcha string `json:"cf-turnstile-response"`
+}
 
 func ExternalGetHandler(c buffalo.Context) error {
 
@@ -33,4 +39,24 @@ func ExternalGetHandler(c buffalo.Context) error {
 	}
 
 	return c.Render(200, r.JSON(map[string]any{"paying": paying}))
+}
+
+func VerifyTurnstileHandler(c buffalo.Context) error {
+	var form ContactForm
+
+	if err := c.Bind(&form); err != nil {
+		return c.Error(400, err)
+	} else if form.Email == "" {
+		return c.Render(400, r.JSON(map[string]string{"message": "Please supply an email along with the turnstile verification."}))
+	}
+
+	success, err := cloudflare.VerifyTurnstile(form.Captcha)
+	if err != nil {
+		return c.Error(400, err)
+	} else if !success {
+		return c.Render(401, r.JSON(map[string]string{"message": "Unfortunately, your submission did not pass the Cloudflare verification. Close this window and try again."}))
+	}
+
+	return c.Render(204, nil)
+
 }

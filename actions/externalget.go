@@ -42,6 +42,19 @@ func ExternalGetHandler(c buffalo.Context) error {
 }
 
 func VerifyTurnstileHandler(c buffalo.Context) error {
+
+	shouldBe := os.Getenv("CHECK_PASSCODE")
+	if shouldBe == "" {
+		return c.Error(500, errors.New("no passcode exists on backend"))
+	}
+
+	passcode := c.Request().Header.Get("X-Passcode-ID")
+	if passcode == "" {
+		return c.Error(400, errors.New("no passcode provided"))
+	} else if passcode != shouldBe {
+		return c.Error(400, errors.New("incorrect passcode provided"))
+	}
+
 	var form ContactForm
 
 	if err := c.Bind(&form); err != nil {

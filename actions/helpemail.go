@@ -21,7 +21,7 @@ func InternalEmailHandler(c buffalo.Context) error {
 }
 
 func ExternalEmailHandler(c buffalo.Context) error {
-	_, err := firebaseApp.VerifyTokenAndReturnUID(c)
+	_, err := firebaseApp.VerifyTokenAndReturnUIDBearer(c)
 	if err != nil {
 		return c.Error(400, err)
 	}

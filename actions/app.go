@@ -14,7 +14,6 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
-	"github.com/gobuffalo/middleware/csrf"
 	"github.com/gobuffalo/middleware/forcessl"
 	"github.com/gobuffalo/middleware/i18n"
 	"github.com/gobuffalo/middleware/paramlogger"
@@ -50,7 +49,7 @@ func App() *buffalo.App {
 
 		app.Use(paramlogger.ParameterLogger)
 
-		app.Use(csrf.New)
+		// app.Use(csrf.New)
 
 		app.Use(middleware.CookieMiddleware)
 
@@ -83,7 +82,7 @@ func App() *buffalo.App {
 		app.POST("/administrative/logout", HandleLogAllOut)
 		app.POST("/administrative/delete", HandleDeleteAccount)
 
-		app.POST("/check/{id}", ExternalGetHandler)
+		app.GET("/check/{id}", ExternalGetHandler)
 
 		app.POST("/helpemail", InternalEmailHandler)
 		app.POST("/administrative/helpemail", ExternalEmailHandler)

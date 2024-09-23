@@ -12,7 +12,7 @@ import (
 )
 
 func HandleLogAllOut(c buffalo.Context) error {
-	uid, err := firebaseApp.VerifyTokenAndReturnUID(c)
+	uid, err := firebaseApp.VerifyTokenAndReturnUIDBearer(c)
 	if err != nil {
 		return c.Error(400, err)
 	}
@@ -27,7 +27,7 @@ func HandleLogAllOut(c buffalo.Context) error {
 }
 
 func HandleDeleteAccount(c buffalo.Context) error {
-	uid, err := firebaseApp.VerifyTokenAndReturnUID(c)
+	uid, err := firebaseApp.VerifyTokenAndReturnUIDBearer(c)
 	if err != nil {
 		return c.Error(400, err)
 	}

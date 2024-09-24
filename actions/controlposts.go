@@ -104,7 +104,7 @@ func PostPayHandler(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
-	if err := redis.AddQueue(newSub.ID); err != nil {
+	if err := redis.CreateSetUserPayment(userid, stripeCustomer.ID, newSub.ID); err != nil {
 		return c.Error(400, err)
 	}
 
